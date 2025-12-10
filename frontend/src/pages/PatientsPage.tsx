@@ -107,16 +107,16 @@ export const PatientsPage: React.FC = () => {
         <div className="mb-6 space-y-4">
           <div className="flex items-center gap-4">
             <div className="flex-1">
-              <input
-                type="text"
-                value={searchTerm}
+            <input
+              type="text"
+              value={searchTerm}
                 onChange={(e) => {
                   setSearchTerm(e.target.value);
                   // currentPage será resetado no useEffect acima
                 }}
-                placeholder="Buscar paciente por nome..."
+              placeholder="Buscar paciente por nome..."
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900/20 focus:border-gray-400 transition-all bg-white"
-              />
+            />
             </div>
             {searchTerm && (
               <button
@@ -180,32 +180,32 @@ export const PatientsPage: React.FC = () => {
             <div className="bg-white rounded-lg border border-gray-200 overflow-hidden mb-6">
               <div className="divide-y divide-gray-100">
                 {patients.map((patient) => (
-                  <div
-                    key={patient.id}
-                    onClick={() => navigate(`/patient/${patient.id}`)}
+              <div
+                key={patient.id}
+                onClick={() => navigate(`/patient/${patient.id}`)}
                     className="px-6 py-4 hover:bg-gray-50 transition-colors duration-150 cursor-pointer group"
-                  >
-                    <div className="flex items-center justify-between">
+              >
+                <div className="flex items-center justify-between">
                       <div className="flex-1 min-w-0">
                         <h3 className="text-base font-semibold text-gray-900 mb-1 truncate">
-                          {patient.full_name}
-                        </h3>
+                      {patient.full_name}
+                    </h3>
                         <p className="text-sm text-gray-500">
-                          {format(new Date(patient.created_at), "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}
-                        </p>
-                      </div>
-                      <svg
-                        className="w-5 h-5 text-gray-300 group-hover:text-gray-400 transition-colors ml-4 flex-shrink-0"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                      </svg>
-                    </div>
+                        {format(new Date(patient.created_at), "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}
+                      </p>
                   </div>
-                ))}
+                  <svg
+                        className="w-5 h-5 text-gray-300 group-hover:text-gray-400 transition-colors ml-4 flex-shrink-0"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                  </svg>
+                </div>
               </div>
+            ))}
+          </div>
             </div>
 
             {/* Paginação */}
@@ -272,19 +272,19 @@ export const PatientsPage: React.FC = () => {
         ) : (
           <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-12 text-center">
             <div className="mb-4">
-              <svg
+            <svg
                 className="w-16 h-16 text-gray-400 mx-auto"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
-                />
-              </svg>
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
+              />
+            </svg>
             </div>
             <p className="text-gray-500 text-lg">
               {searchTerm ? 'Nenhum paciente encontrado com esse nome.' : 'Nenhum paciente cadastrado ainda.'}
