@@ -60,20 +60,6 @@ const setCachedData = (data: FormQuestionsData) => {
 };
 
 /**
- * Verifica se a versão do cache é diferente da versão atual
- */
-const isCacheOutdated = (currentVersion: string): boolean => {
-  const cachedVersion = localStorage.getItem(CACHE_VERSION_KEY);
-  const isOutdated = cachedVersion !== currentVersion;
-  // Se está desatualizado, limpa o cache imediatamente
-  if (isOutdated && cachedVersion) {
-    localStorage.removeItem(CACHE_KEY);
-    localStorage.removeItem(CACHE_VERSION_KEY);
-  }
-  return isOutdated;
-};
-
-/**
  * Hook para buscar perguntas do formulário com cache persistente
  */
 export const useFormQuestionsCache = () => {

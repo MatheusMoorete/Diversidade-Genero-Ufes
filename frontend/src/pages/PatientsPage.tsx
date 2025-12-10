@@ -72,10 +72,6 @@ export const PatientsPage: React.FC = () => {
     return Math.max(1, currentPage); // Pelo menos a página atual
   }, [allPatientsForCount.length, patients.length, itemsPerPage, needsCount, hasSearch, currentPage]);
 
-  const handleSelectPatient = (patient: Patient) => {
-    navigate(`/patient/${patient.id}`);
-  };
-
   const handleSortChange = (order: SortOrder) => {
     setSortOrder(order);
     setCurrentPage(1); // Volta para primeira página ao mudar ordenação

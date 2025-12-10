@@ -8,7 +8,7 @@ import { useQuery } from '@tanstack/react-query';
 import { queryKeys } from '@/config/queryKeys';
 import { useNavigate } from 'react-router-dom';
 import { patientService, formService } from '@/services/api';
-import { format, parseISO, startOfDay, isBefore, addDays, differenceInDays } from 'date-fns';
+import { format, parseISO, startOfDay, differenceInDays } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import type { FormResponse, Patient } from '@/types';
 
@@ -38,7 +38,6 @@ export const ReturnPage: React.FC = () => {
   // Filtra retornos dos próximos 15 dias e adiciona informações do paciente
   const upcomingReturns = useMemo(() => {
     const today = startOfDay(new Date());
-    const fifteenDaysFromNow = addDays(today, 15);
 
     const returnsWithPatient: ReturnWithPatient[] = allFormResponses
       .map((response) => {

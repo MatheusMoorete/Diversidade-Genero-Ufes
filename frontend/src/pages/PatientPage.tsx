@@ -24,7 +24,6 @@ export const PatientPage: React.FC = () => {
   const [isEditingForm, setIsEditingForm] = useState<number | null>(null);
   const [formData, setFormData] = useState<Record<string, unknown>>({});
   const [nextReturnDate, setNextReturnDate] = useState('');
-  const [isDeleting, setIsDeleting] = useState(false);
 
   // Busca o paciente
   const { data: patient, isLoading: isLoadingPatient } = useQuery<Patient>({

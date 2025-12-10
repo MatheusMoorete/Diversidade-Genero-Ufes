@@ -169,7 +169,7 @@ export const DynamicForm: React.FC<DynamicFormProps> = ({
                                         name={question.id}
                                         value="__other__"
                                         checked={stringValue !== '' && !question.options?.includes(stringValue)}
-                                                onChange={(e) => {
+                                                onChange={() => {
                                                     handleChange(question.id, '');
                                                     // Foca no input de texto após um pequeno delay
                                                     setTimeout(() => {
