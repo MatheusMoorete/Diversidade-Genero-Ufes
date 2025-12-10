@@ -45,10 +45,10 @@ API disponível em: http://localhost:8000
 
 1. Conecte o repositório na Vercel
 2. Configure:
-   - **Root Directory:** `frontend`
-   - **Build Command:** `npm run build`
-   - **Output Directory:** `dist`
+   - **Root Directory:** `frontend` ⚠️ **IMPORTANTE**: Configure esta opção
+   - Build Command e Output Directory já estão configurados no `vercel.json`
 3. Adicione variável de ambiente: `VITE_API_URL` (URL do backend)
+4. Clique em Deploy
 
 ### Backend (Railway/Render)
 
