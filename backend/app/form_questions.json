@@ -1,0 +1,480 @@
+{
+  "version": "2.5.0",
+  "last_updated": "2025-01-16",
+  "form_type": "new_patient",
+  "form_name": "Questionário DIV - Novo Paciente",
+  "description": "Formulário completo para registro de novos pacientes",
+  "sections": [
+    {
+      "id": "hormone_therapy",
+      "title": "Terapia Hormonizadora",
+      "questions": [
+        {
+          "id": "using_hormone_therapy",
+          "label": "Está em uso de terapia hormonizadora?",
+          "type": "radio",
+          "options": ["Sim", "Não"],
+          "required": true
+        },
+        {
+          "id": "hormone_therapy_over_one_year",
+          "label": "Faz tratamento hormonal a mais de um ano?",
+          "type": "radio",
+          "options": ["Sim", "Não"],
+          "required": true
+        },
+        {
+          "id": "hormone_type_men",
+          "label": "Qual? (para homens trans)",
+          "type": "radio",
+          "options": [
+            "Sim, undecilato de testosterona (Hormus)",
+            "Sim, cipionato de testosterona (Deposteron)",
+            "Sim, propionato de testosterona (Durateston)",
+            "Nunca fiz",
+            "Não, mas já fiz"
+          ],
+          "allow_other": true,
+          "required": false
+        },
+        {
+          "id": "hormone_type_women",
+          "label": "Qual? (para mulheres trans)",
+          "type": "radio",
+          "options": [
+            "Sim, estradiol + ciproterona",
+            "Sim, somente estradiol",
+            "Sim, somente ciproterona",
+            "Nunca fiz",
+            "Não, mas já fiz"
+          ],
+          "allow_other": true,
+          "required": false
+        },
+        {
+          "id": "suspension_reason",
+          "label": "Se já fez uso e não faz mais, qual o motivo da suspensão?",
+          "type": "radio",
+          "options": [
+            "Efeitos colaterais",
+            "Não vi o resultado esperado",
+            "Custo"
+          ],
+          "allow_other": true,
+          "required": false
+        }
+      ]
+    },
+    {
+      "id": "sociodemographic",
+      "title": "Dados Sociodemográficos",
+      "questions": [
+        {
+          "id": "patient_name",
+          "label": "Nome do paciente",
+          "type": "text",
+          "required": true
+        },
+        {
+          "id": "social_name",
+          "label": "Nome social",
+          "type": "text",
+          "required": false
+        },
+        {
+          "id": "medical_record",
+          "label": "Prontuário",
+          "type": "text",
+          "required": false
+        },
+        {
+          "id": "phone",
+          "label": "Telefone",
+          "type": "tel",
+          "required": false
+        },
+        {
+          "id": "race",
+          "label": "Raça",
+          "type": "radio",
+          "options": ["Branco", "Preto", "Pardo", "Indígena", "Amarelo"],
+          "required": false
+        },
+        {
+          "id": "birth_date",
+          "label": "Data de nascimento",
+          "type": "date",
+          "required": false
+        },
+        {
+          "id": "tcle_signed",
+          "label": "TCLE assinado?",
+          "type": "radio",
+          "options": ["Sim", "Não"],
+          "required": false
+        },
+        {
+          "id": "education_level",
+          "label": "Grau de escolaridade",
+          "type": "radio",
+          "options": [
+            "Analfabeto",
+            "Ensino fundamental incompleto",
+            "Ensino fundamental completo",
+            "Ensino médio incompleto",
+            "Ensino médio completo",
+            "Ensino superior incompleto",
+            "Ensino superior completo"
+          ],
+          "required": false
+        },
+        {
+          "id": "marital_status",
+          "label": "Estado civil",
+          "type": "radio",
+          "options": [
+            "Solteiro",
+            "Casado/União estável",
+            "Separado",
+            "Divorciado",
+            "Viúvo"
+          ],
+          "required": false
+        },
+        {
+          "id": "occupation",
+          "label": "Ocupação principal",
+          "type": "text",
+          "required": false
+        },
+        {
+          "id": "family_income",
+          "label": "Renda familiar",
+          "type": "radio",
+          "options": [
+            "Até 2 salários mínimos",
+            "2-4 salários mínimos",
+            "4-10 salários mínimos",
+            "10-20 salários mínimos",
+            "Acima de 20 salários mínimos"
+          ],
+          "required": false
+        },
+        {
+          "id": "household_size",
+          "label": "Número de pessoas na casa",
+          "type": "radio",
+          "options": ["1", "2", "3", "4", "5 ou mais"],
+          "required": false
+        }
+      ]
+    },
+    {
+      "id": "lifestyle",
+      "title": "Hábitos de Vida",
+      "questions": [
+        {
+          "id": "physical_activity",
+          "label": "Pratica atividade física?",
+          "type": "radio",
+          "options": ["Sim", "Não"],
+          "required": false
+        },
+        {
+          "id": "physical_activity_location",
+          "label": "Em qual local?",
+          "type": "radio",
+          "options": ["Academia e similares", "Ao ar livre"],
+          "allow_other": true,
+          "required": false,
+          "conditional": {
+            "depends_on": "physical_activity",
+            "value": "Sim"
+          }
+        },
+        {
+          "id": "physical_activity_frequency",
+          "label": "Quantas vezes por semana?",
+          "type": "radio",
+          "options": ["1-2 vezes", "3-4 vezes", "> 4 vezes"],
+          "required": false,
+          "conditional": {
+            "depends_on": "physical_activity",
+            "value": "Sim"
+          }
+        },
+        {
+          "id": "physical_activity_duration",
+          "label": "Duração média de cada sessão?",
+          "type": "radio",
+          "options": ["Até 30min", "30-45min", "45-60min", "60-90min", "≥ 90min"],
+          "required": false,
+          "conditional": {
+            "depends_on": "physical_activity",
+            "value": "Sim"
+          }
+        },
+        {
+          "id": "physical_activity_type",
+          "label": "Tipo de atividade física principal?",
+          "type": "radio",
+          "options": [
+            "Aeróbica (caminhada/corrida/natação etc.)",
+            "Musculação"
+          ],
+          "allow_other": true,
+          "required": false,
+          "conditional": {
+            "depends_on": "physical_activity",
+            "value": "Sim"
+          }
+        },
+        {
+          "id": "alcohol_consumption",
+          "label": "Consome bebidas alcoólicas?",
+          "type": "radio",
+          "options": [
+            "Sim",
+            "Não atualmente, mas já consumi",
+            "Nunca consumi"
+          ],
+          "required": false
+        },
+        {
+          "id": "alcohol_frequency",
+          "label": "Frequência do consumo de álcool?",
+          "type": "radio",
+          "options": [
+            "Todos os dias",
+            "3-6 vezes na semana",
+            "1-2 vezes na semana",
+            "1-2 vezes a cada 15 dias",
+            "1-2 vezes no mês"
+          ],
+          "required": false,
+          "conditional": {
+            "depends_on": "alcohol_consumption",
+            "value": "Sim"
+          }
+        },
+        {
+          "id": "alcohol_type",
+          "label": "Tipo de bebida mais frequente?",
+          "type": "radio",
+          "options": [
+            "Não consome",
+            "Destilados (vodka, gin, whisky, cachaça)",
+            "Cerveja",
+            "Vinho"
+          ],
+          "allow_other": true,
+          "required": false
+        },
+        {
+          "id": "smoking",
+          "label": "Você fuma?",
+          "type": "radio",
+          "options": [
+            "Sim",
+            "Não atualmente, mas já fumei",
+            "Nunca fumei"
+          ],
+          "required": false
+        },
+        {
+          "id": "cigarette_type",
+          "label": "Tipo de cigarro mais frequente?",
+          "type": "radio",
+          "options": [
+            "Cigarro de maço",
+            "Cigarro eletrônico",
+            "Outras formas (cachimbo, palha etc.)"
+          ],
+          "allow_other": true,
+          "required": false,
+          "conditional": {
+            "depends_on": "smoking",
+            "value": "Sim"
+          }
+        },
+        {
+          "id": "cigarettes_per_day",
+          "label": "Quantidade de cigarros por dia?",
+          "type": "radio",
+          "options": ["Até 10", "10-20", "≥ 20"],
+          "required": false,
+          "conditional": {
+            "depends_on": "cigarette_type",
+            "value": "Cigarro de maço"
+          }
+        },
+        {
+          "id": "illicit_drugs",
+          "label": "Faz uso de drogas ilícitas?",
+          "type": "radio",
+          "options": [
+            "Sim",
+            "Não atualmente, mas já usei",
+            "Nunca usei"
+          ],
+          "required": false
+        },
+        {
+          "id": "illicit_drugs_type",
+          "label": "Qual/quais drogas?",
+          "type": "checkbox",
+          "options": [
+            "Maconha",
+            "Cocaína",
+            "Crack",
+            "Inalantes (loló e outros)"
+          ],
+          "allow_other": true,
+          "required": false,
+          "conditional": {
+            "depends_on": "illicit_drugs",
+            "value": "Sim"
+          }
+        },
+        {
+          "id": "illicit_drugs_frequency",
+          "label": "Frequência do uso de drogas?",
+          "type": "radio",
+          "options": [
+            "Todos os dias",
+            "3-6 vezes na semana",
+            "1-2 vezes na semana",
+            "1-2 vezes a cada 15 dias",
+            "1-2 vezes a cada mês"
+          ],
+          "required": false,
+          "conditional": {
+            "depends_on": "illicit_drugs",
+            "value": "Sim"
+          }
+        }
+      ]
+    },
+    {
+      "id": "health_history",
+      "title": "História Patológica e Familiar",
+      "questions": [
+        {
+          "id": "previous_diseases",
+          "label": "Você tem/teve alguma dessas doenças?",
+          "type": "checkbox",
+          "options": [
+            "Hipertensão arterial",
+            "Diabetes",
+            "Dislipidemias",
+            "Artrose/Artrite",
+            "Varizes",
+            "Trombose"
+          ],
+          "allow_other": true,
+          "required": false
+        },
+        {
+          "id": "family_history",
+          "label": "História familiar de doenças?",
+          "type": "textarea",
+          "placeholder": "Cardiovasculares, trombóticas, oncológicas, ou outros",
+          "required": false
+        },
+        {
+          "id": "current_medications",
+          "label": "Medicamentos em uso atual",
+          "type": "textarea",
+          "placeholder": "Medicamento, dose e frequência",
+          "required": false
+        },
+        {
+          "id": "blood_pressure",
+          "label": "PA (Pressão Arterial)",
+          "type": "text",
+          "placeholder": "Ex: 120/80",
+          "required": false
+        },
+        {
+          "id": "height",
+          "label": "Altura (cm)",
+          "type": "number",
+          "required": false
+        },
+        {
+          "id": "weight",
+          "label": "Peso (kg)",
+          "type": "number",
+          "required": false
+        },
+        {
+          "id": "bmi",
+          "label": "IMC",
+          "type": "number",
+          "required": false,
+          "readonly": true,
+          "calculated": {
+            "formula": "weight / ((height / 100) ^ 2)",
+            "depends_on": ["weight", "height"]
+          }
+        }
+      ]
+    },
+    {
+      "id": "mental_health",
+      "title": "Saúde Mental",
+      "questions": [
+        {
+          "id": "mental_health_follow_up",
+          "label": "Faz/fez acompanhamento de saúde mental?",
+          "type": "radio",
+          "options": [
+            "Sim, psiquiatra",
+            "Sim, psicólogo",
+            "Sim, psicólogo e psiquiatra",
+            "Não"
+          ],
+          "allow_other": true,
+          "required": false
+        },
+        {
+          "id": "mental_health_follow_up_duration",
+          "label": "Há quanto tempo?",
+          "type": "text",
+          "required": false,
+          "conditional": {
+            "depends_on": "mental_health_follow_up",
+            "value_not": "Não"
+          }
+        },
+        {
+          "id": "mental_health_diagnosis",
+          "label": "Diagnósticos de saúde mental?",
+          "type": "checkbox",
+          "options": [
+            "Depressão",
+            "Ansiedade",
+            "Síndrome do pânico",
+            "Transtorno afetivo bipolar",
+            "Insônia"
+          ],
+          "allow_other": true,
+          "required": false
+        },
+        {
+          "id": "hormone_mental_health_correlation",
+          "label": "Correlação com hormonioterapia?",
+          "type": "radio",
+          "options": [
+            "Sim, houve melhora do quadro",
+            "Sim, houve piora do quadro",
+            "Não, manteve-se estável",
+            "Não, quadro iniciou antes da hormonioterapia",
+            "Não faço uso de hormonioterapia"
+          ],
+          "required": false
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,21 @@
+{
+  "mcp.servers": {
+    "sequential-thinking": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-sequential-thinking"
+      ],
+      "description": "Sequential Thinking MCP - Processo estruturado de pensamento sequencial"
+    },
+    "context7": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@upstash/context7-mcp"
+      ],
+      "description": "Context7 MCP - Acesso a documentações oficiais atualizadas"
+    }
+  }
+}
+

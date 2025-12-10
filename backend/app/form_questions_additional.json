@@ -1,0 +1,316 @@
+{
+  "version": "1.0.0",
+  "last_updated": "2025-01-15",
+  "form_type": "return_visit",
+  "form_name": "Questionário DIV - Formulário Adicional (Retorno)",
+  "description": "Formulário adicional para consultas de retorno com questões sobre hormonoterapia e dados laboratoriais",
+  "sections": [
+    {
+      "id": "hormone_therapy_objectives",
+      "title": "HORMONOTERAPIA - Objetivos",
+      "questions": [
+        {
+          "id": "hormone_objectives_men",
+          "label": "Quais os seus objetivos quando começou/ para começar a hormonioterapia (homens trans)?",
+          "type": "checkbox",
+          "options": [
+            "Amenorreia",
+            "Construção de massa muscular/ redução de gordura corporal",
+            "Desenvolvimento de pilificação",
+            "Masculinização vocal",
+            "Aumento da libido"
+          ],
+          "allow_other": true,
+          "required": false,
+          "conditional": {
+            "depends_on": "using_hormone_therapy",
+            "value": "Sim"
+          }
+        },
+        {
+          "id": "hormone_objectives_women",
+          "label": "Quais os seus objetivos quando começou/ para começar a hormonioterapia (mulheres trans)?",
+          "type": "checkbox",
+          "options": [
+            "Redução de pilificação",
+            "Redistribuição de gordura corporal",
+            "Desenvolvimento mamário",
+            "Melhora na textura da pele",
+            "Redução de libido/ ereções"
+          ],
+          "allow_other": true,
+          "required": false,
+          "conditional": {
+            "depends_on": "using_hormone_therapy",
+            "value": "Sim"
+          }
+        }
+      ]
+    },
+    {
+      "id": "hormone_therapy_reactions",
+      "title": "HORMONOTERAPIA - Reações e Efeitos",
+      "questions": [
+        {
+          "id": "allergic_reaction",
+          "label": "Já teve alguma reação alérgica grave desde o início da hormonioterapia (anafilaxia)?",
+          "type": "radio",
+          "options": [
+            "Sim, uma vez",
+            "Sim, mais de uma vez",
+            "Não",
+            "Não faço uso de hormonioterapia"
+          ],
+          "required": false
+        },
+        {
+          "id": "acne_occurrence",
+          "label": "Teve acne desde o início da hormonioterapia?",
+          "type": "radio",
+          "options": [
+            "Sim, uma vez",
+            "Sim, mais de uma vez",
+            "Não",
+            "Não faço uso de hormonioterapia"
+          ],
+          "required": false
+        },
+        {
+          "id": "acne_location",
+          "label": "Qual a região de acometimento da acne?",
+          "type": "checkbox",
+          "options": [
+            "Face",
+            "Colo",
+            "Dorso",
+            "Não tive acne"
+          ],
+          "allow_other": true,
+          "required": false,
+          "conditional": {
+            "depends_on": "acne_occurrence",
+            "value_not": "Não"
+          }
+        },
+        {
+          "id": "acanthosis_nigricans",
+          "label": "Notou as áreas do pescoço, axilas ou outras áreas de dobra mais enegrecidas (acantose nigricans)?",
+          "type": "radio",
+          "options": [
+            "Sim",
+            "Não",
+            "Não faço uso de hormonioterapia"
+          ],
+          "required": false
+        },
+        {
+          "id": "breast_nodules",
+          "label": "Notou o aparecimento de nódulos ou tumores palpáveis nas mamas?",
+          "type": "radio",
+          "options": [
+            "Sim",
+            "Não",
+            "Não, pois sou mastectomizado",
+            "Não faço uso de hormonioterapia"
+          ],
+          "required": false
+        }
+      ]
+    },
+    {
+      "id": "hormone_therapy_mood",
+      "title": "HORMONOTERAPIA - Humor e Autoestima",
+      "questions": [
+        {
+          "id": "irritability_aggressiveness",
+          "label": "Com o uso da hormonioterapia, notou aumento de irritabilidade e/ou agressividade?",
+          "type": "radio",
+          "options": [
+            "Sim, substancialmente",
+            "Sim, levemente",
+            "Não",
+            "Não faço uso de hormonioterapia"
+          ],
+          "required": false
+        },
+        {
+          "id": "stress_increase",
+          "label": "Com o uso da hormonioterapia, notou aumento de estresse?",
+          "type": "radio",
+          "options": [
+            "Sim, substancialmente",
+            "Sim, levemente",
+            "Não",
+            "Não faço uso de hormonioterapia"
+          ],
+          "required": false
+        },
+        {
+          "id": "mood_changes",
+          "label": "Notou alguma outra mudança no humor?",
+          "type": "checkbox",
+          "options": [
+            "Labilidade emocional",
+            "Tristeza/ choro fácil",
+            "Euforia/ agitação",
+            "Aumento na disposição",
+            "Redução na disposição",
+            "Aumento na libido",
+            "Redução na libido"
+          ],
+          "allow_other": true,
+          "required": false
+        },
+        {
+          "id": "self_esteem",
+          "label": "Como você avalia a sua autoestima durante o uso da hormonioterapia?",
+          "type": "radio",
+          "options": [
+            "Melhorou",
+            "Manteve-se estável",
+            "Piorou",
+            "Não faço uso de hormonioterapia"
+          ],
+          "required": false
+        },
+        {
+          "id": "satisfaction_results",
+          "label": "Qual seu grau de satisfação com os resultados físicos/estéticos da hormonioterapia?",
+          "type": "radio",
+          "options": [
+            "Muito satisfeito",
+            "Satisfeito",
+            "Regular",
+            "Insatisfeito",
+            "Muito insatisfeito",
+            "Não faço uso de hormonioterapia"
+          ],
+          "required": false
+        },
+        {
+          "id": "other_health_conditions",
+          "label": "Notou o aparecimento de outras condições de saúde (ex. nódulos hepáticos, outros nódulos, condições dermatológicas etc)",
+          "type": "textarea",
+          "placeholder": "Descreva outras condições de saúde observadas...",
+          "required": false
+        }
+      ]
+    },
+    {
+      "id": "lab_and_bioimpedance",
+      "title": "Dados laboratoriais e de Bioimpedância",
+      "questions": [
+        {
+          "id": "bioimpedance_weight",
+          "label": "Bioimpedância - Peso (Kg)",
+          "type": "number",
+          "required": false
+        },
+        {
+          "id": "bioimpedance_muscle",
+          "label": "Bioimpedância - Músculo (Kg)",
+          "type": "number",
+          "required": false
+        },
+        {
+          "id": "bioimpedance_fat",
+          "label": "Bioimpedância - Gordura (%)",
+          "type": "number",
+          "required": false
+        },
+        {
+          "id": "glucose",
+          "label": "Glicose (data)",
+          "type": "text",
+          "placeholder": "Ex: 90 mg/dL - 15/01/2025",
+          "required": false
+        },
+        {
+          "id": "tgo",
+          "label": "TGO (data)",
+          "type": "text",
+          "placeholder": "Ex: 25 U/L - 15/01/2025",
+          "required": false
+        },
+        {
+          "id": "tgp",
+          "label": "TGP (data)",
+          "type": "text",
+          "placeholder": "Ex: 30 U/L - 15/01/2025",
+          "required": false
+        },
+        {
+          "id": "triglycerides",
+          "label": "Triglicerídeos (data)",
+          "type": "text",
+          "placeholder": "Ex: 150 mg/dL - 15/01/2025",
+          "required": false
+        },
+        {
+          "id": "total_cholesterol",
+          "label": "Colesterol Total (data)",
+          "type": "text",
+          "placeholder": "Ex: 200 mg/dL - 15/01/2025",
+          "required": false
+        },
+        {
+          "id": "hdl",
+          "label": "HDL (data)",
+          "type": "text",
+          "placeholder": "Ex: 50 mg/dL - 15/01/2025",
+          "required": false
+        },
+        {
+          "id": "ldl",
+          "label": "LDL (data)",
+          "type": "text",
+          "placeholder": "Ex: 130 mg/dL - 15/01/2025",
+          "required": false
+        },
+        {
+          "id": "testosterone",
+          "label": "Testosterona (data)",
+          "type": "text",
+          "placeholder": "Ex: 500 ng/dL - 15/01/2025",
+          "required": false
+        },
+        {
+          "id": "hemoglobin",
+          "label": "Hemoglobina (data)",
+          "type": "text",
+          "placeholder": "Ex: 14 g/dL - 15/01/2025",
+          "required": false
+        },
+        {
+          "id": "hematocrit",
+          "label": "Hematócrito (data)",
+          "type": "text",
+          "placeholder": "Ex: 42% - 15/01/2025",
+          "required": false
+        },
+        {
+          "id": "leukocytes",
+          "label": "Leucócitos (data)",
+          "type": "text",
+          "placeholder": "Ex: 7000 /mm³ - 15/01/2025",
+          "required": false
+        },
+        {
+          "id": "platelets",
+          "label": "Plaquetas (data)",
+          "type": "text",
+          "placeholder": "Ex: 250000 /mm³ - 15/01/2025",
+          "required": false
+        },
+        {
+          "id": "other_exams",
+          "label": "Outros exames (data)",
+          "type": "textarea",
+          "placeholder": "Descreva outros exames realizados com valores e datas...",
+          "required": false
+        }
+      ]
+    }
+  ]
+}
+

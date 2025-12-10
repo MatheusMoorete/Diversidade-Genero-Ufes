@@ -1,0 +1,77 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual Environment
+venv/
+env/
+ENV/
+.venv
+
+# Banco de dados
+*.db
+*.sqlite
+*.sqlite3
+
+# Logs
+*.log
+audit.log
+
+# Exports
+exports/
+
+# Chave de criptografia
+.encryption_key
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Ambiente
+.env
+.env.local
+.env.*.local
+
+# Scripts temporários/utilitários
+setup_env.py
+
+# Arquivos de configuração local
+py.ini
+*.ini.local
+
+# Arquivos de backup
+*.backup
+*.bak
+*.old
+
+# Arquivos temporários
+*.tmp
+*.temp
+temp/
+tmp/
+

@@ -1,0 +1,240 @@
+/**
+ * Estilos globais e configuração do TailwindCSS.
+ */
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Cores da bandeira trans */
+:root {
+  --trans-blue: #55CDFC;
+  --trans-pink: #F7A8B8;
+  --trans-white: #FFFFFF;
+}
+
+/* Classes customizadas para cores trans */
+.bg-trans-blue { background-color: #55CDFC; }
+.bg-trans-pink { background-color: #F7A8B8; }
+.text-trans-blue { color: #55CDFC; }
+.text-trans-pink { color: #F7A8B8; }
+.border-trans-blue { border-color: #55CDFC; }
+.border-trans-pink { border-color: #F7A8B8; }
+.ring-trans-blue { --tw-ring-color: #55CDFC; }
+.ring-trans-pink { --tw-ring-color: #F7A8B8; }
+.from-trans-blue { --tw-gradient-from: #55CDFC; }
+.from-trans-pink { --tw-gradient-from: #F7A8B8; }
+.via-trans-blue { --tw-gradient-stops: var(--tw-gradient-from), #55CDFC, var(--tw-gradient-to); }
+.via-trans-pink { --tw-gradient-stops: var(--tw-gradient-from), #F7A8B8, var(--tw-gradient-to); }
+.to-trans-blue { --tw-gradient-to: #55CDFC; }
+.to-trans-pink { --tw-gradient-to: #F7A8B8; }
+.focus\:border-trans-blue:focus { border-color: #55CDFC; }
+.focus\:border-trans-pink:focus { border-color: #F7A8B8; }
+.focus\:ring-trans-blue:focus { --tw-ring-color: #55CDFC; }
+.focus\:ring-trans-pink:focus { --tw-ring-color: #F7A8B8; }
+.hover\:text-trans-blue:hover { color: #55CDFC; }
+.hover\:text-trans-pink:hover { color: #F7A8B8; }
+
+/* Estilos para input floating label - Design Moderno e Limpo */
+.input-floating {
+  position: relative;
+  width: 100%;
+  margin-bottom: 1.5rem;
+}
+
+.input-floating .input {
+  width: 100%;
+  padding: 1rem;
+  background: #ffffff;
+  border: 2px solid #e5e7eb;
+  border-radius: 0.5rem;
+  font-size: 1rem;
+  line-height: 1.5;
+  transition: all 0.2s ease-in-out;
+  outline: none;
+  color: #111827;
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+}
+
+.input-floating .input.pt-6 {
+  padding-top: 1.375rem !important;
+  padding-bottom: 0.625rem !important;
+}
+
+.input-floating .input:hover:not(:disabled):not(.input-readonly) {
+  border-color: #d1d5db;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+}
+
+.input-floating .input:focus {
+  border-color: #55CDFC;
+  box-shadow: 0 0 0 3px rgba(85, 205, 252, 0.1);
+  outline: none;
+}
+
+.input-floating .input::placeholder {
+  color: transparent;
+  opacity: 0;
+}
+
+.input-floating .input:disabled,
+.input-floating .input.input-readonly {
+  background-color: #f9fafb;
+  color: #6b7280;
+  cursor: not-allowed;
+  border-color: #e5e7eb;
+}
+
+.input-floating .input.input-error {
+  border-color: #ef4444;
+}
+
+.input-floating .input.input-error:focus {
+  border-color: #ef4444;
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
+}
+
+.input-floating .input-floating-label {
+  position: absolute;
+  left: 1rem;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 1rem;
+  color: #6b7280;
+  pointer-events: none;
+  transition: all 0.2s ease-in-out;
+  background: transparent;
+  padding: 0 0.25rem;
+  transform-origin: left center;
+  white-space: nowrap;
+  z-index: 1;
+}
+
+.input-floating .input-floating-label-floating {
+  top: 0.5rem;
+  transform: scale(0.875);
+  font-size: 0.875rem;
+  color: #55CDFC;
+  font-weight: 500;
+  background: transparent;
+  padding: 0;
+  left: 1rem;
+  z-index: 2;
+  line-height: 1;
+}
+
+.input-floating .input:focus + .input-floating-label {
+  color: #55CDFC;
+}
+
+.input-floating .input.input-error + .input-floating-label {
+  color: #ef4444;
+}
+
+/* Ajuste para inputs de data */
+.input-floating .input[type="date"],
+.input-floating .input[type="datetime-local"],
+.input-floating .input[type="time"] {
+  padding-top: 1.5rem;
+  padding-bottom: 0.5rem;
+}
+
+.input-floating .input[type="date"] + .input-floating-label,
+.input-floating .input[type="datetime-local"] + .input-floating-label,
+.input-floating .input[type="time"] + .input-floating-label {
+  top: 0.75rem;
+  transform: translateY(0) scale(0.875);
+  font-size: 0.875rem;
+}
+
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow-x: hidden;
+}
+
+html {
+  overflow-x: hidden;
+}
+
+code {
+  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
+    monospace;
+}
+
+/* Remove bordas padrão dos inputs no focus */
+input:focus,
+textarea:focus {
+  outline: none !important;
+  box-shadow: none !important;
+  border-top: none !important;
+  border-left: none !important;
+  border-right: none !important;
+}
+
+/* Remove setas (spinners) dos inputs de número */
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+input[type="number"] {
+  -moz-appearance: textfield;
+}
+
+/* Animações customizadas para o sidebar */
+@keyframes slideInFromLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -1000px 0;
+  }
+  100% {
+    background-position: 1000px 0;
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.sidebar-menu-item {
+  animation: slideInFromLeft 0.3s ease-out backwards;
+}
+
+.sidebar-shimmer {
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.1),
+    transparent
+  );
+  background-size: 1000px 100%;
+  animation: shimmer 2s infinite;
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.3s ease-out;
+}
+

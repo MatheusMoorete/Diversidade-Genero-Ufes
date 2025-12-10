@@ -1,0 +1,89 @@
+# Dependências
+node_modules/
+venv/
+env/
+ENV/
+.venv/
+
+# Build outputs
+dist/
+build/
+*.egg-info/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+
+# Logs
+*.log
+audit.log
+logs/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Ambiente
+.env
+.env.local
+.env.*.local
+.env.production
+.env.development
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Arquivos temporários
+*.tmp
+*.temp
+temp/
+tmp/
+
+# Arquivos sensíveis
+.encryption_key
+*.pem
+*.key
+
+# Arquivos de backup
+*.backup
+*.bak
+*.old
+
+# Exports (contém dados sensíveis)
+backend/exports/
+frontend/exports/
+
+# Scripts temporários de desenvolvimento
+backend/delete_mock_patients.py
+backend/reset_db.py
+backend/setup_env.py
+instalar-mcps.ps1
+
+# Cache
+.cache/
+.parcel-cache/
+.eslintcache
+*.tsbuildinfo
+
+# Test coverage
+coverage/
+.nyc_output/
+
+# Arquivos de configuração local
+py.ini
+*.ini.local
+
+# Documentação (manter apenas README.md no GitHub)
+DEPLOY.md
+PREPARACAO_GITHUB.md
+ESTRUTURA_REPOSITORIO.md
+

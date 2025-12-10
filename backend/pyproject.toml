@@ -1,0 +1,16 @@
+[tool.pyright]
+include = ["app"]
+exclude = [
+    "**/__pycache__",
+    "**/.venv",
+    "**/node_modules"
+]
+venvPath = "."
+venv = ".venv"
+pythonVersion = "3.11"
+typeCheckingMode = "basic"
+reportMissingImports = "warning"
+reportMissingModuleSource = "warning"
+reportMissingTypeStubs = "none"
+reportUnusedImport = "warning"
+reportUnusedVariable = "warning"
