@@ -61,8 +61,11 @@ def get_password_hash(password: str) -> str:
     # Bcrypt tem limite de 72 bytes, trunca se necessário
     password_bytes = password.encode('utf-8')
     if len(password_bytes) > 72:
-        password = password_bytes[:72].decode('utf-8', errors='ignore')
-    return pwd_context.hash(password)
+        password_bytes = password_bytes[:72]
+    # Usa bcrypt diretamente para evitar problemas com passlib
+    salt = bcrypt.gensalt()
+    hashed = bcrypt.hashpw(password_bytes, salt)
+    return hashed.decode('utf-8')
 
 
 def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -> str:
