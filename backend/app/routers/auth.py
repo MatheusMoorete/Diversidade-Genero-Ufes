@@ -52,9 +52,11 @@ async def register(
     except Exception as e:
         # Log de erro sem expor senha
         logger.error(f"Erro ao criar usuário: {str(e)}", exc_info=True)
+        # Rollback da transação em caso de erro
+        db.rollback()
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Erro ao criar usuário"
+            detail=f"Erro ao criar usuário: {str(e)}"
         )
 
 
