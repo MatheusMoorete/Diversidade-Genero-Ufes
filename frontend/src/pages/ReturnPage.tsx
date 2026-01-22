@@ -44,19 +44,19 @@ export const ReturnPage: React.FC = () => {
         const patient = patients.find((p) => p.id === response.patient_id);
         return { ...response, patient };
       })
-    .filter((response) => {
-      if (!response.next_return_date) return false;
+      .filter((response) => {
+        if (!response.next_return_date) return false;
         const returnDate = startOfDay(parseISO(response.next_return_date));
         const daysDiff = differenceInDays(returnDate, today);
         // Inclui retornos de hoje até 15 dias no futuro (0 a 15 dias)
         return daysDiff >= 0 && daysDiff <= 15;
-    })
-    .sort((a, b) => {
-      if (!a.next_return_date || !b.next_return_date) return 0;
+      })
+      .sort((a, b) => {
+        if (!a.next_return_date || !b.next_return_date) return 0;
         const dateA = startOfDay(parseISO(a.next_return_date));
         const dateB = startOfDay(parseISO(b.next_return_date));
         return dateA.getTime() - dateB.getTime();
-    });
+      });
 
     return returnsWithPatient;
   }, [allFormResponses, patients]);
@@ -107,7 +107,7 @@ export const ReturnPage: React.FC = () => {
         <div className="space-y-6">
           {isLoading ? (
             <div className="text-center py-12">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#55CDFC] mx-auto mb-4"></div>
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#4A6FA5] mx-auto mb-4"></div>
               <p className="text-gray-500">Carregando retornos...</p>
             </div>
           ) : sortedDates.length === 0 ? (
@@ -118,8 +118,8 @@ export const ReturnPage: React.FC = () => {
                 </svg>
               </div>
               <p className="text-gray-500 text-lg">Nenhum retorno agendado para os próximos 15 dias</p>
-                </div>
-              ) : (
+            </div>
+          ) : (
             sortedDates.map((dateKey) => {
               const returns = returnsByDate[dateKey];
               const returnDate = startOfDay(parseISO(dateKey));
@@ -144,7 +144,7 @@ export const ReturnPage: React.FC = () => {
                         ({format(returnDate, "dd/MM/yyyy", { locale: ptBR })})
                       </span>
                       {isTodayReturn && (
-                        <span className="px-2 py-1 bg-[#55CDFC] text-white text-xs font-medium rounded-full">
+                        <span className="px-2 py-1 bg-[#4A6FA5] text-white text-xs font-medium rounded-full">
                           Hoje
                         </span>
                       )}
@@ -157,21 +157,21 @@ export const ReturnPage: React.FC = () => {
                     {returns.map((returnItem) => {
                       const daysUntilReturn = differenceInDays(returnDate, today);
 
-                    return (
-                      <div
+                      return (
+                        <div
                           key={returnItem.id}
-                        className={`
+                          className={`
                             bg-white rounded-xl shadow-sm border-2 p-6
                             hover:shadow-md transition-all cursor-pointer
                             ${isTodayReturn
-                              ? 'border-[#55CDFC] bg-gradient-to-r from-[#55CDFC]/5 to-transparent'
+                              ? 'border-[#4A6FA5] bg-gradient-to-r from-[#4A6FA5]/5 to-transparent'
                               : daysUntilReturn <= 3
                                 ? 'border-yellow-300 bg-yellow-50/30'
                                 : 'border-gray-200'
-                          }
+                            }
                         `}
                           onClick={() => navigate(`/patient/${returnItem.patient_id}`)}
-                      >
+                        >
                           <div className="flex items-start justify-between">
                             <div className="flex-1">
                               <h3 className="text-lg font-bold text-gray-900 mb-2">
@@ -181,15 +181,15 @@ export const ReturnPage: React.FC = () => {
                                 <p>
                                   Última consulta:{' '}
                                   {format(parseISO(returnItem.response_date), "dd/MM/yyyy", {
-                                locale: ptBR,
-                              })}
-                            </p>
+                                    locale: ptBR,
+                                  })}
+                                </p>
                                 {returnItem.uses_hormone_over_1year && (
                                   <span className="inline-flex items-center px-2 py-1 bg-blue-100 text-blue-800 text-xs font-medium rounded">
-                                Usa hormônio há mais de 1 ano
-                              </span>
-                            )}
-                          </div>
+                                    Usa hormônio há mais de 1 ano
+                                  </span>
+                                )}
+                              </div>
                               {daysUntilReturn > 0 && (
                                 <p className="text-sm text-gray-500">
                                   Em {daysUntilReturn} {daysUntilReturn === 1 ? 'dia' : 'dias'}
@@ -197,11 +197,11 @@ export const ReturnPage: React.FC = () => {
                               )}
                             </div>
                             <div className="flex items-center space-x-2">
-                            {isTodayReturn && (
-                                <span className="px-3 py-1 bg-[#55CDFC] text-white text-sm font-medium rounded-lg">
-                                Hoje
-                              </span>
-                            )}
+                              {isTodayReturn && (
+                                <span className="px-3 py-1 bg-[#4A6FA5] text-white text-sm font-medium rounded-lg">
+                                  Hoje
+                                </span>
+                              )}
                               {daysUntilReturn <= 3 && daysUntilReturn > 0 && (
                                 <span className="px-3 py-1 bg-yellow-400 text-yellow-900 text-sm font-medium rounded-lg">
                                   Em breve
@@ -220,11 +220,11 @@ export const ReturnPage: React.FC = () => {
                                   d="M9 5l7 7-7 7"
                                 />
                               </svg>
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    );
-                  })}
+                      );
+                    })}
                   </div>
                 </div>
               );

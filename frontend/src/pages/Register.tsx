@@ -54,7 +54,7 @@ export const Register: React.FC = () => {
   return (
     <div
       className="min-h-screen flex items-center justify-center p-4"
-      style={{ background: 'linear-gradient(135deg, #F7A8B8 0%, #55CDFC 50%, #F7A8B8 100%)' }}
+      style={{ background: 'linear-gradient(135deg, #64748B 0%, #4A6FA5 50%, #3B5F8A 100%)' }}
     >
       {/* Card de Registro */}
       <div className="w-full max-w-sm bg-white rounded-2xl shadow-xl p-6 sm:p-8">
@@ -100,7 +100,7 @@ export const Register: React.FC = () => {
               autoFocus
               minLength={3}
               maxLength={50}
-              className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 placeholder-gray-400 focus:outline-none focus:border-[#55CDFC] focus:ring-2 focus:ring-[#55CDFC]/20 transition-all"
+              className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 placeholder-gray-400 focus:outline-none focus:border-[#4A6FA5] focus:ring-2 focus:ring-[#4A6FA5]/20 transition-all"
               placeholder="Escolha um usuário"
             />
           </div>
@@ -121,7 +121,7 @@ export const Register: React.FC = () => {
                 onChange={(e) => setPassword(e.target.value)}
                 required
                 minLength={6}
-                className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 placeholder-gray-400 focus:outline-none focus:border-[#F7A8B8] focus:ring-2 focus:ring-[#F7A8B8]/20 transition-all pr-12"
+                className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 placeholder-gray-400 focus:outline-none focus:border-[#4A6FA5] focus:ring-2 focus:ring-[#4A6FA5]/20 transition-all pr-12"
                 placeholder="Mínimo 6 caracteres"
               />
               <button
@@ -159,7 +159,7 @@ export const Register: React.FC = () => {
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 required
                 minLength={6}
-                className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 placeholder-gray-400 focus:outline-none focus:border-[#F7A8B8] focus:ring-2 focus:ring-[#F7A8B8]/20 transition-all pr-12"
+                className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 placeholder-gray-400 focus:outline-none focus:border-[#4A6FA5] focus:ring-2 focus:ring-[#4A6FA5]/20 transition-all pr-12"
                 placeholder="Repita a senha"
               />
               <button
@@ -185,8 +185,8 @@ export const Register: React.FC = () => {
           <button
             type="submit"
             disabled={isLoading || success}
-            className="w-full py-3 px-4 text-white font-semibold rounded-xl hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#F7A8B8] transition-all disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.98]"
-            style={{ background: 'linear-gradient(90deg, #F7A8B8, #55CDFC)' }}
+            className="w-full py-3 px-4 text-white font-semibold rounded-xl hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#4A6FA5] transition-all disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.98]"
+            style={{ background: 'linear-gradient(90deg, #3B5F8A, #4A6FA5)' }}
           >
             {isLoading ? (
               <span className="flex items-center justify-center">
@@ -208,7 +208,7 @@ export const Register: React.FC = () => {
           <Link
             to="/login"
             className="font-semibold"
-            style={{ color: '#F7A8B8' }}
+            style={{ color: '#4A6FA5' }}
           >
             Entrar
           </Link>

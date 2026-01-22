@@ -34,7 +34,7 @@ export const Login: React.FC = () => {
   return (
     <div
       className="min-h-screen flex items-center justify-center p-4"
-      style={{ background: 'linear-gradient(135deg, #55CDFC 0%, #F7A8B8 50%, #55CDFC 100%)' }}
+      style={{ background: 'linear-gradient(135deg, #3B5F8A 0%, #4A6FA5 50%, #64748B 100%)' }}
     >
       {/* Card de Login */}
       <div className="w-full max-w-sm bg-white rounded-2xl shadow-xl p-6 sm:p-8">
@@ -70,7 +70,7 @@ export const Login: React.FC = () => {
               onChange={(e) => setUsername(e.target.value)}
               required
               autoFocus
-              className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 placeholder-gray-400 focus:outline-none focus:border-[#5BCEFA] focus:ring-2 focus:ring-[#5BCEFA]/20 transition-all"
+              className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 placeholder-gray-400 focus:outline-none focus:border-[#4A6FA5] focus:ring-2 focus:ring-[#4A6FA5]/20 transition-all"
               placeholder="Digite seu usuário"
             />
           </div>
@@ -90,7 +90,7 @@ export const Login: React.FC = () => {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
-                className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 placeholder-gray-400 focus:outline-none focus:border-[#F7A8B8] focus:ring-2 focus:ring-[#F7A8B8]/20 transition-all pr-12"
+                className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 placeholder-gray-400 focus:outline-none focus:border-[#4A6FA5] focus:ring-2 focus:ring-[#4A6FA5]/20 transition-all pr-12"
                 placeholder="Digite sua senha"
               />
               <button
@@ -116,8 +116,8 @@ export const Login: React.FC = () => {
           <button
             type="submit"
             disabled={isLoading}
-            className="w-full py-3 px-4 text-white font-semibold rounded-xl hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#55CDFC] transition-all disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.98]"
-            style={{ background: 'linear-gradient(90deg, #55CDFC, #F7A8B8)' }}
+            className="w-full py-3 px-4 text-white font-semibold rounded-xl hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#4A6FA5] transition-all disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.98]"
+            style={{ background: 'linear-gradient(90deg, #3B5F8A, #4A6FA5)' }}
           >
             {isLoading ? (
               <span className="flex items-center justify-center">
@@ -139,7 +139,7 @@ export const Login: React.FC = () => {
           <Link
             to="/register"
             className="font-semibold"
-            style={{ color: '#55CDFC' }}
+            style={{ color: '#4A6FA5' }}
           >
             Criar conta
           </Link>

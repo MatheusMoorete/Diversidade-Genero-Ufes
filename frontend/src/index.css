@@ -2,38 +2,102 @@
  * Estilos globais e configuração do TailwindCSS.
  */
 
+/* Google Fonts - Plus Jakarta Sans */
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,200..800;1,200..800&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-/* Cores da bandeira trans */
+/* Paleta de cores frias - Slate/Steel Blue */
 :root {
-  --trans-blue: #55CDFC;
-  --trans-pink: #F7A8B8;
-  --trans-white: #FFFFFF;
+  --primary: #4A6FA5;
+  --primary-light: #6B8FC5;
+  --secondary: #64748B;
+  --secondary-light: #94A3B8;
+  --accent: #3B5F8A;
 }
 
-/* Classes customizadas para cores trans */
-.bg-trans-blue { background-color: #55CDFC; }
-.bg-trans-pink { background-color: #F7A8B8; }
-.text-trans-blue { color: #55CDFC; }
-.text-trans-pink { color: #F7A8B8; }
-.border-trans-blue { border-color: #55CDFC; }
-.border-trans-pink { border-color: #F7A8B8; }
-.ring-trans-blue { --tw-ring-color: #55CDFC; }
-.ring-trans-pink { --tw-ring-color: #F7A8B8; }
-.from-trans-blue { --tw-gradient-from: #55CDFC; }
-.from-trans-pink { --tw-gradient-from: #F7A8B8; }
-.via-trans-blue { --tw-gradient-stops: var(--tw-gradient-from), #55CDFC, var(--tw-gradient-to); }
-.via-trans-pink { --tw-gradient-stops: var(--tw-gradient-from), #F7A8B8, var(--tw-gradient-to); }
-.to-trans-blue { --tw-gradient-to: #55CDFC; }
-.to-trans-pink { --tw-gradient-to: #F7A8B8; }
-.focus\:border-trans-blue:focus { border-color: #55CDFC; }
-.focus\:border-trans-pink:focus { border-color: #F7A8B8; }
-.focus\:ring-trans-blue:focus { --tw-ring-color: #55CDFC; }
-.focus\:ring-trans-pink:focus { --tw-ring-color: #F7A8B8; }
-.hover\:text-trans-blue:hover { color: #55CDFC; }
-.hover\:text-trans-pink:hover { color: #F7A8B8; }
+/* Classes customizadas - mantendo nomes para compatibilidade */
+.bg-trans-blue {
+  background-color: var(--primary);
+}
+
+.bg-trans-pink {
+  background-color: var(--secondary);
+}
+
+.text-trans-blue {
+  color: var(--primary);
+}
+
+.text-trans-pink {
+  color: var(--secondary);
+}
+
+.border-trans-blue {
+  border-color: var(--primary);
+}
+
+.border-trans-pink {
+  border-color: var(--secondary);
+}
+
+.ring-trans-blue {
+  --tw-ring-color: var(--primary);
+}
+
+.ring-trans-pink {
+  --tw-ring-color: var(--secondary);
+}
+
+.from-trans-blue {
+  --tw-gradient-from: var(--primary);
+}
+
+.from-trans-pink {
+  --tw-gradient-from: var(--secondary);
+}
+
+.via-trans-blue {
+  --tw-gradient-stops: var(--tw-gradient-from), var(--primary), var(--tw-gradient-to);
+}
+
+.via-trans-pink {
+  --tw-gradient-stops: var(--tw-gradient-from), var(--secondary), var(--tw-gradient-to);
+}
+
+.to-trans-blue {
+  --tw-gradient-to: var(--primary);
+}
+
+.to-trans-pink {
+  --tw-gradient-to: var(--secondary);
+}
+
+.focus\:border-trans-blue:focus {
+  border-color: var(--primary);
+}
+
+.focus\:border-trans-pink:focus {
+  border-color: var(--secondary);
+}
+
+.focus\:ring-trans-blue:focus {
+  --tw-ring-color: var(--primary);
+}
+
+.focus\:ring-trans-pink:focus {
+  --tw-ring-color: var(--secondary);
+}
+
+.hover\:text-trans-blue:hover {
+  color: var(--primary);
+}
+
+.hover\:text-trans-pink:hover {
+  color: var(--secondary);
+}
 
 /* Estilos para input floating label - Design Moderno e Limpo */
 .input-floating {
@@ -67,8 +131,8 @@
 }
 
 .input-floating .input:focus {
-  border-color: #55CDFC;
-  box-shadow: 0 0 0 3px rgba(85, 205, 252, 0.1);
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(74, 111, 165, 0.15);
   outline: none;
 }
 
@@ -114,7 +178,7 @@
   top: 0.5rem;
   transform: scale(0.875);
   font-size: 0.875rem;
-  color: #55CDFC;
+  color: var(--primary);
   font-weight: 500;
   background: transparent;
   padding: 0;
@@ -123,11 +187,11 @@
   line-height: 1;
 }
 
-.input-floating .input:focus + .input-floating-label {
-  color: #55CDFC;
+.input-floating .input:focus+.input-floating-label {
+  color: var(--primary);
 }
 
-.input-floating .input.input-error + .input-floating-label {
+.input-floating .input.input-error+.input-floating-label {
   color: #ef4444;
 }
 
@@ -139,9 +203,9 @@
   padding-bottom: 0.5rem;
 }
 
-.input-floating .input[type="date"] + .input-floating-label,
-.input-floating .input[type="datetime-local"] + .input-floating-label,
-.input-floating .input[type="time"] + .input-floating-label {
+.input-floating .input[type="date"]+.input-floating-label,
+.input-floating .input[type="datetime-local"]+.input-floating-label,
+.input-floating .input[type="time"]+.input-floating-label {
   top: 0.75rem;
   transform: translateY(0) scale(0.875);
   font-size: 0.875rem;
@@ -149,9 +213,8 @@
 
 body {
   margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
-    sans-serif;
+  font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI',
+    'Helvetica Neue', sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   overflow-x: hidden;
@@ -193,6 +256,7 @@ input[type="number"] {
     opacity: 0;
     transform: translateX(-10px);
   }
+
   to {
     opacity: 1;
     transform: translateX(0);
@@ -203,6 +267,7 @@ input[type="number"] {
   0% {
     background-position: -1000px 0;
   }
+
   100% {
     background-position: 1000px 0;
   }
@@ -213,6 +278,7 @@ input[type="number"] {
     opacity: 0;
     transform: translateY(-10px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -224,12 +290,10 @@ input[type="number"] {
 }
 
 .sidebar-shimmer {
-  background: linear-gradient(
-    90deg,
-    transparent,
-    rgba(255, 255, 255, 0.1),
-    transparent
-  );
+  background: linear-gradient(90deg,
+      transparent,
+      rgba(255, 255, 255, 0.1),
+      transparent);
   background-size: 1000px 100%;
   animation: shimmer 2s infinite;
 }
@@ -237,4 +301,3 @@ input[type="number"] {
 .animate-fade-in {
   animation: fadeIn 0.3s ease-out;
 }
-

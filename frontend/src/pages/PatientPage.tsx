@@ -62,7 +62,7 @@ export const PatientPage: React.FC = () => {
   // Cria um mapa de ID -> Label para todos os campos do formulário
   const fieldLabelsMap = useMemo(() => {
     const map: Record<string, string> = {};
-    
+
     // Adiciona labels do formulário padrão
     if (questionsData) {
       questionsData.sections.forEach((section) => {
@@ -71,7 +71,7 @@ export const PatientPage: React.FC = () => {
         });
       });
     }
-    
+
     // Adiciona labels do formulário adicional
     if (additionalQuestionsData) {
       additionalQuestionsData.sections.forEach((section) => {
@@ -80,7 +80,7 @@ export const PatientPage: React.FC = () => {
         });
       });
     }
-    
+
     return map;
   }, [questionsData, additionalQuestionsData]);
 
@@ -91,13 +91,13 @@ export const PatientPage: React.FC = () => {
     onSuccess: () => {
       // Invalida form responses do paciente
       if (patientId) {
-        queryClient.invalidateQueries({ 
-          queryKey: queryKeys.formResponses.byPatient(patientId) 
+        queryClient.invalidateQueries({
+          queryKey: queryKeys.formResponses.byPatient(patientId)
         });
       }
       // Invalida retornos (data de retorno pode ter mudado)
-      queryClient.invalidateQueries({ 
-        queryKey: queryKeys.formResponses.upcomingReturns() 
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.formResponses.upcomingReturns()
       });
       setIsEditingForm(null);
       setFormData({});
@@ -113,8 +113,8 @@ export const PatientPage: React.FC = () => {
       // Invalida todas as queries de pacientes
       queryClient.invalidateQueries({ queryKey: queryKeys.patients.all });
       // Invalida retornos (paciente deletado pode ter removido retornos)
-      queryClient.invalidateQueries({ 
-        queryKey: queryKeys.formResponses.upcomingReturns() 
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.formResponses.upcomingReturns()
       });
       alert('Paciente excluído com sucesso!');
       navigate('/form');
@@ -173,7 +173,7 @@ export const PatientPage: React.FC = () => {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#55CDFC] mx-auto mb-4"></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#4A6FA5] mx-auto mb-4"></div>
           <p className="text-gray-600">Carregando paciente...</p>
         </div>
       </div>
@@ -224,7 +224,7 @@ export const PatientPage: React.FC = () => {
           <h2 className="text-2xl font-semibold text-gray-900 mb-4">Formulários</h2>
           {isLoadingForms ? (
             <div className="text-center py-8">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#55CDFC] mx-auto mb-4"></div>
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#4A6FA5] mx-auto mb-4"></div>
               <p className="text-gray-500">Carregando formulários...</p>
             </div>
           ) : formResponses && formResponses.length > 0 ? (
@@ -257,7 +257,7 @@ export const PatientPage: React.FC = () => {
 
                       {isLoadingQuestions ? (
                         <div className="text-center py-8">
-                          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#55CDFC] mx-auto mb-4"></div>
+                          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#4A6FA5] mx-auto mb-4"></div>
                           <p className="text-gray-500">Carregando formulário...</p>
                         </div>
                       ) : questionsData ? (

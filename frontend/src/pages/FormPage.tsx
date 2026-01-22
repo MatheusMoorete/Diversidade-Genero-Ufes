@@ -280,13 +280,13 @@ export const FormPage: React.FC = () => {
 
               {/* Opção de criar novo paciente */}
               {!selectedPatient && (
-                <div className="bg-gradient-to-br from-[#55CDFC]/5 to-[#F7A8B8]/5 rounded-xl border-2 border-dashed border-[#55CDFC]/30 hover:border-[#55CDFC] transition-all duration-300">
+                <div className="bg-gradient-to-br from-[#4A6FA5]/5 to-[#64748B]/5 rounded-xl border-2 border-dashed border-[#4A6FA5]/30 hover:border-[#4A6FA5] transition-all duration-300">
                   <button
                     type="button"
                     onClick={handleStartNewPatient}
-                    className="w-full py-6 text-gray-700 hover:text-[#55CDFC] transition-colors flex flex-col items-center justify-center space-y-3 group"
+                    className="w-full py-6 text-gray-700 hover:text-[#4A6FA5] transition-colors flex flex-col items-center justify-center space-y-3 group"
                   >
-                    <div className="w-12 h-12 rounded-full bg-[#55CDFC] flex items-center justify-center transform group-hover:scale-110 transition-transform">
+                    <div className="w-12 h-12 rounded-full bg-[#4A6FA5] flex items-center justify-center transform group-hover:scale-110 transition-transform">
                       <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4" />
                       </svg>
@@ -301,10 +301,10 @@ export const FormPage: React.FC = () => {
 
               {/* Paciente Selecionado (existente) */}
               {selectedPatient && (
-                <div className="bg-gradient-to-r from-[#55CDFC]/10 to-[#F7A8B8]/10 rounded-xl border-2 border-[#55CDFC]/20 p-6">
+                <div className="bg-gradient-to-r from-[#4A6FA5]/10 to-[#64748B]/10 rounded-xl border-2 border-[#4A6FA5]/20 p-6">
                   <div className="flex items-center justify-between">
                     <div className="flex-1">
-                      <p className="text-xs font-semibold text-[#55CDFC] uppercase tracking-wide mb-2">
+                      <p className="text-xs font-semibold text-[#4A6FA5] uppercase tracking-wide mb-2">
                         Paciente Selecionado
                       </p>
                       <p className="text-xl font-bold text-gray-900">{selectedPatient.full_name}</p>
@@ -313,7 +313,7 @@ export const FormPage: React.FC = () => {
                       <button
                         type="button"
                         onClick={() => navigate(`/patient/${selectedPatient.id}`)}
-                        className="px-4 py-2 text-sm font-medium text-white bg-gradient-to-r from-[#55CDFC] to-[#F7A8B8] rounded-lg hover:opacity-90 transition-opacity shadow-sm"
+                        className="px-4 py-2 text-sm font-medium text-white bg-gradient-to-r from-[#3B5F8A] to-[#4A6FA5] rounded-lg hover:opacity-90 transition-opacity shadow-sm"
                         title="Ver detalhes do paciente"
                       >
                         Ver Detalhes
@@ -345,7 +345,7 @@ export const FormPage: React.FC = () => {
               {/* Formulário Dinâmico */}
               {isLoadingQuestions ? (
                 <div className="text-center py-12">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#55CDFC] mx-auto mb-4"></div>
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#4A6FA5] mx-auto mb-4"></div>
                   <p className="text-gray-500">Carregando formulário...</p>
                 </div>
               ) : questionsData ? (
@@ -389,8 +389,8 @@ export const FormPage: React.FC = () => {
                       variant="primary"
                       size="lg"
                       isLoading={createFormMutation.isPending || createPatientMutation.isPending}
-                      className={`w-full ${isCreatingNewPatient ? 'bg-[#F7A8B8] hover:bg-[#F7A8B8]/90' : ''}`}
-                      style={isCreatingNewPatient ? { background: '#F7A8B8' } : { background: 'linear-gradient(90deg, #55CDFC, #F7A8B8)' }}
+                      className={`w-full ${isCreatingNewPatient ? 'bg-[#64748B] hover:bg-[#64748B]/90' : ''}`}
+                      style={isCreatingNewPatient ? { background: '#64748B' } : { background: 'linear-gradient(90deg, #3B5F8A, #4A6FA5)' }}
                     >
                       {isCreatingNewPatient ? 'Cadastrar Paciente' : 'Salvar Formulário'}
                     </Button>

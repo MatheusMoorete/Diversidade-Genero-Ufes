@@ -123,34 +123,34 @@ export const DynamicForm: React.FC<DynamicFormProps> = ({
                             {question.options?.map((option) => {
                                 const isChecked = stringValue === option;
                                 return (
-                                    <label 
-                                        key={option} 
+                                    <label
+                                        key={option}
                                         className="flex items-center space-x-3 cursor-pointer group"
                                     >
                                         <div className="relative flex items-center flex-shrink-0">
-                                        <input
-                                            type="radio"
-                                            name={question.id}
-                                            value={option}
-                                            checked={isChecked}
-                                            onChange={(e) => {
-                                                if (isChecked && !question.required) {
-                                                    handleChange(question.id, '');
-                                                } else {
-                                                    handleChange(question.id, e.target.value);
-                                                }
-                                            }}
+                                            <input
+                                                type="radio"
+                                                name={question.id}
+                                                value={option}
+                                                checked={isChecked}
+                                                onChange={(e) => {
+                                                    if (isChecked && !question.required) {
+                                                        handleChange(question.id, '');
+                                                    } else {
+                                                        handleChange(question.id, e.target.value);
+                                                    }
+                                                }}
                                                 className="sr-only"
                                             />
                                             <div className={`
                                                 w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all
-                                                ${isChecked 
-                                                    ? 'border-[#55CDFC] bg-white' 
-                                                    : 'border-gray-400 bg-white group-hover:border-[#55CDFC]'
+                                                ${isChecked
+                                                    ? 'border-[#4A6FA5] bg-white'
+                                                    : 'border-gray-400 bg-white group-hover:border-[#4A6FA5]'
                                                 }
                                             `}>
                                                 {isChecked && (
-                                                    <div className="w-2.5 h-2.5 rounded-full bg-[#55CDFC]"></div>
+                                                    <div className="w-2.5 h-2.5 rounded-full bg-[#4A6FA5]"></div>
                                                 )}
                                             </div>
                                         </div>
@@ -164,11 +164,11 @@ export const DynamicForm: React.FC<DynamicFormProps> = ({
                                 <div className="mt-4 space-y-3">
                                     <label className="flex items-center space-x-3 cursor-pointer group">
                                         <div className="relative flex items-center flex-shrink-0">
-                                    <input
-                                        type="radio"
-                                        name={question.id}
-                                        value="__other__"
-                                        checked={stringValue !== '' && !question.options?.includes(stringValue)}
+                                            <input
+                                                type="radio"
+                                                name={question.id}
+                                                value="__other__"
+                                                checked={stringValue !== '' && !question.options?.includes(stringValue)}
                                                 onChange={() => {
                                                     handleChange(question.id, '');
                                                     // Foca no input de texto após um pequeno delay
@@ -184,12 +184,12 @@ export const DynamicForm: React.FC<DynamicFormProps> = ({
                                             <div className={`
                                                 w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all
                                                 ${stringValue !== '' && !question.options?.includes(stringValue)
-                                                    ? 'border-[#55CDFC] bg-white' 
-                                                    : 'border-gray-400 bg-white group-hover:border-[#55CDFC]'
+                                                    ? 'border-[#4A6FA5] bg-white'
+                                                    : 'border-gray-400 bg-white group-hover:border-[#4A6FA5]'
                                                 }
                                             `}>
                                                 {stringValue !== '' && !question.options?.includes(stringValue) && (
-                                                    <div className="w-2.5 h-2.5 rounded-full bg-[#55CDFC]"></div>
+                                                    <div className="w-2.5 h-2.5 rounded-full bg-[#4A6FA5]"></div>
                                                 )}
                                             </div>
                                         </div>
@@ -201,7 +201,7 @@ export const DynamicForm: React.FC<DynamicFormProps> = ({
                                         value={!question.options?.includes(stringValue) ? stringValue : ''}
                                         onChange={(e) => handleChange(question.id, e.target.value)}
                                         className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg
-                                            focus:border-[#55CDFC] focus:outline-none focus:ring-4 focus:ring-blue-100
+                                            focus:border-[#4A6FA5] focus:outline-none focus:ring-4 focus:ring-blue-100
                                             bg-white transition-all text-base
                                             placeholder:text-gray-400"
                                         placeholder="Especifique..."
@@ -225,31 +225,31 @@ export const DynamicForm: React.FC<DynamicFormProps> = ({
                                 const selectedValues = Array.isArray(value) ? value : [];
                                 const isChecked = selectedValues.includes(option);
                                 return (
-                                    <label 
-                                        key={option} 
+                                    <label
+                                        key={option}
                                         className="flex items-center space-x-3 cursor-pointer group"
                                     >
                                         <div className="relative flex items-center flex-shrink-0">
-                                        <input
-                                            type="checkbox"
-                                            checked={isChecked}
-                                            onChange={(e) => {
-                                                const currentValues = Array.isArray(value) ? [...value] : [];
-                                                if (e.target.checked) {
-                                                    currentValues.push(option);
-                                                } else {
-                                                    const idx = currentValues.indexOf(option);
-                                                    if (idx > -1) currentValues.splice(idx, 1);
-                                                }
-                                                handleChange(question.id, currentValues);
-                                            }}
+                                            <input
+                                                type="checkbox"
+                                                checked={isChecked}
+                                                onChange={(e) => {
+                                                    const currentValues = Array.isArray(value) ? [...value] : [];
+                                                    if (e.target.checked) {
+                                                        currentValues.push(option);
+                                                    } else {
+                                                        const idx = currentValues.indexOf(option);
+                                                        if (idx > -1) currentValues.splice(idx, 1);
+                                                    }
+                                                    handleChange(question.id, currentValues);
+                                                }}
                                                 className="sr-only"
                                             />
                                             <div className={`
                                                 w-5 h-5 rounded border-2 flex items-center justify-center transition-all
-                                                ${isChecked 
-                                                    ? 'border-[#F7A8B8] bg-[#F7A8B8]' 
-                                                    : 'border-gray-400 bg-white group-hover:border-[#F7A8B8]'
+                                                ${isChecked
+                                                    ? 'border-[#64748B] bg-[#64748B]'
+                                                    : 'border-gray-400 bg-white group-hover:border-[#64748B]'
                                                 }
                                             `}>
                                                 {isChecked && (
@@ -269,9 +269,9 @@ export const DynamicForm: React.FC<DynamicFormProps> = ({
                                 <div className="mt-4 space-y-3">
                                     <label className="flex items-center space-x-3 cursor-pointer group">
                                         <div className="relative flex items-center flex-shrink-0">
-                                    <input
-                                        type="checkbox"
-                                        checked={Array.isArray(value) && value.some(v => !question.options?.includes(v))}
+                                            <input
+                                                type="checkbox"
+                                                checked={Array.isArray(value) && value.some(v => !question.options?.includes(v))}
                                                 onChange={(e) => {
                                                     if (e.target.checked) {
                                                         // Foca no input de texto após um pequeno delay
@@ -288,8 +288,8 @@ export const DynamicForm: React.FC<DynamicFormProps> = ({
                                             <div className={`
                                                 w-5 h-5 rounded border-2 flex items-center justify-center transition-all
                                                 ${Array.isArray(value) && value.some(v => !question.options?.includes(v))
-                                                    ? 'border-[#F7A8B8] bg-[#F7A8B8]' 
-                                                    : 'border-gray-400 bg-white group-hover:border-[#F7A8B8]'
+                                                    ? 'border-[#64748B] bg-[#64748B]'
+                                                    : 'border-gray-400 bg-white group-hover:border-[#64748B]'
                                                 }
                                             `}>
                                                 {Array.isArray(value) && value.some(v => !question.options?.includes(v)) && (
@@ -312,7 +312,7 @@ export const DynamicForm: React.FC<DynamicFormProps> = ({
                                             handleChange(question.id, currentValues);
                                         }}
                                         className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg
-                                            focus:border-[#F7A8B8] focus:outline-none focus:ring-4 focus:ring-pink-100
+                                            focus:border-[#64748B] focus:outline-none focus:ring-4 focus:ring-slate-100
                                             bg-white transition-all text-base
                                             placeholder:text-gray-400"
                                         placeholder="Especifique..."
@@ -354,7 +354,7 @@ export const DynamicForm: React.FC<DynamicFormProps> = ({
                             onChange={(e) => handleChange(question.id, e.target.value)}
                             className={`
                                 w-full px-4 py-3 border-2 border-gray-200 rounded-lg
-                                focus:border-[#55CDFC] focus:outline-none focus:ring-4 focus:ring-blue-100
+                                focus:border-[#4A6FA5] focus:outline-none focus:ring-4 focus:ring-blue-100
                                 bg-white transition-all
                                 text-gray-900
                                 ${error ? 'border-red-500 focus:border-red-500 focus:ring-red-100' : ''}
@@ -424,7 +424,7 @@ export const DynamicForm: React.FC<DynamicFormProps> = ({
                             rows={4}
                             className={`
                                 w-full px-4 py-3 border-2 border-gray-200 rounded-lg
-                                focus:border-[#55CDFC] focus:outline-none focus:ring-4 focus:ring-blue-100
+                                focus:border-[#4A6FA5] focus:outline-none focus:ring-4 focus:ring-blue-100
                                 bg-white resize-none transition-all
                                 placeholder:text-gray-400
                                 ${error ? 'border-red-500 focus:border-red-500 focus:ring-red-100' : ''}
