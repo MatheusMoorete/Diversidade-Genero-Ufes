@@ -18,24 +18,32 @@ interface ReturnWithPatient extends FormResponse {
 
 export const ReturnPage: React.FC = () => {
   const navigate = useNavigate();
+  const [filterDays, setFilterDays] = React.useState<15 | 30 | 90>(15);
+  const [currentPage, setCurrentPage] = React.useState(1);
+  const itemsPerPage = 5; // Mostra 5 datas por página (frontend pagination)
+
+  // Reseta página quando filtro muda
+  React.useEffect(() => {
+    setCurrentPage(1);
+  }, [filterDays]);
 
   // Busca todos os pacientes (para associar aos retornos)
   const { data: patients = [], isLoading: isLoadingPatients } = useQuery({
     queryKey: queryKeys.patients.list({}),
     queryFn: () => patientService.searchPatients('', 0, 1000),
-    staleTime: 1000 * 60 * 3, // 3 minutos - lista de pacientes muda ocasionalmente
-    gcTime: 1000 * 60 * 5, // 5 minutos em cache
+    staleTime: 1000 * 60 * 3,
+    gcTime: 1000 * 60 * 5,
   });
 
-  // Busca todos os retornos dos próximos 15 dias em uma única chamada
+  // Busca todos os retornos dos próximos N dias
   const { data: allFormResponses = [], isLoading: isLoadingReturns } = useQuery({
-    queryKey: queryKeys.formResponses.upcomingReturns(15),
-    queryFn: () => formService.getUpcomingReturns(15),
-    staleTime: 1000 * 60, // 1 minuto - retornos são mais dinâmicos
-    gcTime: 1000 * 60 * 3, // 3 minutos em cache
+    queryKey: queryKeys.formResponses.upcomingReturns(filterDays),
+    queryFn: () => formService.getUpcomingReturns(filterDays),
+    staleTime: 1000 * 60,
+    gcTime: 1000 * 60 * 3,
   });
 
-  // Filtra retornos dos próximos 15 dias e adiciona informações do paciente
+  // Filtra retornos dos próximos N dias e adiciona informações do paciente
   const upcomingReturns = useMemo(() => {
     const today = startOfDay(new Date());
 
@@ -48,8 +56,8 @@ export const ReturnPage: React.FC = () => {
         if (!response.next_return_date) return false;
         const returnDate = startOfDay(parseISO(response.next_return_date));
         const daysDiff = differenceInDays(returnDate, today);
-        // Inclui retornos de hoje até 15 dias no futuro (0 a 15 dias)
-        return daysDiff >= 0 && daysDiff <= 15;
+        // Inclui retornos de hoje até N dias no futuro
+        return daysDiff >= 0 && daysDiff <= filterDays;
       })
       .sort((a, b) => {
         if (!a.next_return_date || !b.next_return_date) return 0;
@@ -59,7 +67,7 @@ export const ReturnPage: React.FC = () => {
       });
 
     return returnsWithPatient;
-  }, [allFormResponses, patients]);
+  }, [allFormResponses, patients, filterDays]);
 
   const today = startOfDay(new Date());
   const isLoading = isLoadingPatients || isLoadingReturns;
@@ -86,19 +94,45 @@ export const ReturnPage: React.FC = () => {
     return Object.keys(returnsByDate).sort();
   }, [returnsByDate]);
 
+  // Lógica de Paginação (Frontend)
+  const totalItems = sortedDates.length;
+  const totalPages = Math.ceil(totalItems / itemsPerPage);
+
+  const currentDates = useMemo(() => {
+    const start = (currentPage - 1) * itemsPerPage;
+    return sortedDates.slice(start, start + itemsPerPage);
+  }, [sortedDates, currentPage]);
+
   return (
     <div className="min-h-screen bg-gray-50 py-8 px-4 sm:py-12 sm:px-6 lg:px-8">
       <div className="max-w-4xl mx-auto">
         {/* Header */}
         <div className="mb-10">
-          <div className="mb-6">
+          <div className="mb-6 flex flex-col md:flex-row md:items-end justify-between gap-4">
             <div className="text-left">
               <h1 className="text-4xl font-bold text-gray-900 mb-3">
-                Retornos Agendados
+                <span className="hidden md:inline">Retornos Agendados</span>
+                <span className="md:hidden">Retornos</span>
               </h1>
               <p className="text-gray-500 text-lg">
-                Próximos retornos dos próximos 15 dias
+                Próximos retornos dos próximos {filterDays === 90 ? '3 meses' : `${filterDays} dias`}
               </p>
+            </div>
+
+            {/* Filtro de Período */}
+            <div className="flex bg-gray-200/50 p-1 rounded-xl shadow-inner-sm w-full md:w-auto">
+              {[15, 30, 90].map((days) => (
+                <button
+                  key={days}
+                  onClick={() => setFilterDays(days as 15 | 30 | 90)}
+                  className={`flex-1 md:flex-initial px-4 py-2 rounded-lg text-sm font-bold transition-all duration-300 ${filterDays === days
+                    ? 'bg-white text-[#4A6FA5] shadow-md transform scale-[1.02]'
+                    : 'text-gray-500 hover:text-gray-700'
+                    }`}
+                >
+                  {days === 90 ? '3 Meses' : `${days} Dias`}
+                </button>
+              ))}
             </div>
           </div>
         </div>
@@ -117,118 +151,188 @@ export const ReturnPage: React.FC = () => {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                 </svg>
               </div>
-              <p className="text-gray-500 text-lg">Nenhum retorno agendado para os próximos 15 dias</p>
+              <p className="text-gray-500 text-lg">
+                Nenhum retorno agendado para os próximos {filterDays === 90 ? '3 meses' : `${filterDays} dias`}
+              </p>
             </div>
           ) : (
-            sortedDates.map((dateKey) => {
-              const returns = returnsByDate[dateKey];
-              const returnDate = startOfDay(parseISO(dateKey));
-              const daysFromToday = differenceInDays(returnDate, today);
-              const isTodayReturn = daysFromToday === 0;
-              const isTomorrow = daysFromToday === 1;
+            <>
+              {currentDates.map((dateKey) => {
+                const returns = returnsByDate[dateKey];
+                const returnDate = startOfDay(parseISO(dateKey));
+                const daysFromToday = differenceInDays(returnDate, today);
+                const isTodayReturn = daysFromToday === 0;
+                const isTomorrow = daysFromToday === 1;
 
-              return (
-                <div key={dateKey} className="space-y-4">
-                  {/* Cabeçalho da Data */}
-                  <div className="flex items-center space-x-3">
-                    <div className="flex-1 border-t border-gray-200"></div>
-                    <div className="flex items-center space-x-2">
-                      <span className="text-lg font-semibold text-gray-900">
-                        {isTodayReturn
-                          ? 'Hoje'
-                          : isTomorrow
-                            ? 'Amanhã'
-                            : format(returnDate, "EEEE, dd 'de' MMMM", { locale: ptBR })}
-                      </span>
-                      <span className="text-sm text-gray-500">
-                        ({format(returnDate, "dd/MM/yyyy", { locale: ptBR })})
-                      </span>
-                      {isTodayReturn && (
-                        <span className="px-2 py-1 bg-[#4A6FA5] text-white text-xs font-medium rounded-full">
-                          Hoje
+                return (
+                  <div key={dateKey} className="space-y-4">
+                    {/* Cabeçalho da Data */}
+                    <div className="flex items-center space-x-3">
+                      <div className="flex-1 border-t border-gray-200"></div>
+                      <div className="flex items-center space-x-2">
+                        <span className="text-lg font-semibold text-gray-900 capitalize">
+                          {isTodayReturn
+                            ? 'Hoje'
+                            : isTomorrow
+                              ? 'Amanhã'
+                              : (
+                                <>
+                                  <span className="md:hidden">{format(returnDate, "EEEE", { locale: ptBR })}</span>
+                                  <span className="hidden md:inline">{format(returnDate, "EEEE, dd 'de' MMMM", { locale: ptBR })}</span>
+                                </>
+                              )}
                         </span>
-                      )}
+                        <span className="text-sm text-gray-500">
+                          ({format(returnDate, "dd/MM/yyyy", { locale: ptBR })})
+                        </span>
+                        {isTodayReturn && (
+                          <span className="px-2 py-1 bg-[#4A6FA5] text-white text-xs font-medium rounded-full">
+                            Hoje
+                          </span>
+                        )}
+                      </div>
+                      <div className="flex-1 border-t border-gray-200"></div>
                     </div>
-                    <div className="flex-1 border-t border-gray-200"></div>
-                  </div>
 
-                  {/* Cards de Retornos */}
-                  <div className="space-y-3">
-                    {returns.map((returnItem) => {
-                      const daysUntilReturn = differenceInDays(returnDate, today);
+                    {/* Cards de Retornos */}
+                    <div className="space-y-3">
+                      {returns.map((returnItem) => {
+                        const daysUntilReturn = differenceInDays(returnDate, today);
 
-                      return (
-                        <div
-                          key={returnItem.id}
-                          className={`
+                        return (
+                          <div
+                            key={returnItem.id}
+                            className={`
                             bg-white rounded-xl shadow-sm border-2 p-6
                             hover:shadow-md transition-all cursor-pointer
                             ${isTodayReturn
-                              ? 'border-[#4A6FA5] bg-gradient-to-r from-[#4A6FA5]/5 to-transparent'
-                              : daysUntilReturn <= 3
-                                ? 'border-yellow-300 bg-yellow-50/30'
-                                : 'border-gray-200'
-                            }
+                                ? 'border-[#4A6FA5] bg-gradient-to-r from-[#4A6FA5]/5 to-transparent'
+                                : daysUntilReturn <= 3
+                                  ? 'border-yellow-300 bg-yellow-50/30'
+                                  : 'border-gray-200'
+                              }
                         `}
-                          onClick={() => navigate(`/patient/${returnItem.patient_id}`)}
-                        >
-                          <div className="flex items-start justify-between">
-                            <div className="flex-1">
-                              <h3 className="text-lg font-bold text-gray-900 mb-2">
-                                {returnItem.patient?.full_name || 'Paciente não encontrado'}
-                              </h3>
-                              <div className="flex flex-wrap gap-4 text-sm text-gray-600 mb-3">
-                                <p>
-                                  Última consulta:{' '}
-                                  {format(parseISO(returnItem.response_date), "dd/MM/yyyy", {
-                                    locale: ptBR,
-                                  })}
-                                </p>
-                                {returnItem.uses_hormone_over_1year && (
-                                  <span className="inline-flex items-center px-2 py-1 bg-blue-100 text-blue-800 text-xs font-medium rounded">
-                                    Usa hormônio há mais de 1 ano
-                                  </span>
+                            onClick={() => navigate(`/patient/${returnItem.patient_id}`)}
+                          >
+                            <div className="flex items-start justify-between">
+                              <div className="flex-1">
+                                <h3 className="text-lg font-bold text-gray-900 mb-2">
+                                  {returnItem.patient?.full_name || 'Paciente não encontrado'}
+                                </h3>
+                                <div className="flex flex-wrap gap-4 text-sm text-gray-600 mb-3">
+                                  <p>
+                                    Última consulta:{' '}
+                                    {format(parseISO(returnItem.response_date), "dd/MM/yyyy", {
+                                      locale: ptBR,
+                                    })}
+                                  </p>
+                                  {returnItem.uses_hormone_over_1year && (
+                                    <span className="inline-flex items-center px-2 py-1 bg-blue-100 text-blue-800 text-xs font-medium rounded">
+                                      Usa hormônio há mais de 1 ano
+                                    </span>
+                                  )}
+                                </div>
+                                {daysUntilReturn > 0 && (
+                                  <p className="text-sm text-gray-500">
+                                    Em {daysUntilReturn} {daysUntilReturn === 1 ? 'dia' : 'dias'}
+                                  </p>
                                 )}
                               </div>
-                              {daysUntilReturn > 0 && (
-                                <p className="text-sm text-gray-500">
-                                  Em {daysUntilReturn} {daysUntilReturn === 1 ? 'dia' : 'dias'}
-                                </p>
-                              )}
-                            </div>
-                            <div className="flex items-center space-x-2">
-                              {isTodayReturn && (
-                                <span className="px-3 py-1 bg-[#4A6FA5] text-white text-sm font-medium rounded-lg">
-                                  Hoje
-                                </span>
-                              )}
-                              {daysUntilReturn <= 3 && daysUntilReturn > 0 && (
-                                <span className="px-3 py-1 bg-yellow-400 text-yellow-900 text-sm font-medium rounded-lg">
-                                  Em breve
-                                </span>
-                              )}
-                              <svg
-                                className="w-5 h-5 text-gray-400"
-                                fill="none"
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
-                              >
-                                <path
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                  strokeWidth={2}
-                                  d="M9 5l7 7-7 7"
-                                />
-                              </svg>
+                              <div className="flex items-center space-x-2">
+                                {isTodayReturn && (
+                                  <span className="px-3 py-1 bg-[#4A6FA5] text-white text-sm font-medium rounded-lg">
+                                    Hoje
+                                  </span>
+                                )}
+                                {daysUntilReturn <= 3 && daysUntilReturn > 0 && (
+                                  <span className="px-3 py-1 bg-yellow-400 text-yellow-900 text-sm font-medium rounded-lg">
+                                    Em breve
+                                  </span>
+                                )}
+                                <svg
+                                  className="w-5 h-5 text-gray-400"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  viewBox="0 0 24 24"
+                                >
+                                  <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth={2}
+                                    d="M9 5l7 7-7 7"
+                                  />
+                                </svg>
+                              </div>
                             </div>
                           </div>
-                        </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                );
+              })}
+
+              {/* Controles de Paginação */}
+              {totalPages > 1 && (
+                <div className="flex items-center justify-center space-x-2 pt-8">
+                  <button
+                    onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
+                    disabled={currentPage === 1}
+                    className={`
+                      px-4 py-2 text-sm font-medium rounded-lg transition-colors
+                      ${currentPage === 1
+                        ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                        : 'bg-white text-gray-700 hover:bg-gray-50 border-2 border-gray-200'
+                      }
+                    `}
+                  >
+                    Anterior
+                  </button>
+                  <div className="flex items-center space-x-1">
+                    {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                      let pageNum;
+                      if (totalPages <= 5) {
+                        pageNum = i + 1;
+                      } else if (currentPage <= 3) {
+                        pageNum = i + 1;
+                      } else if (currentPage >= totalPages - 2) {
+                        pageNum = totalPages - 4 + i;
+                      } else {
+                        pageNum = currentPage - 2 + i;
+                      }
+                      return (
+                        <button
+                          key={pageNum}
+                          onClick={() => setCurrentPage(pageNum as number)}
+                          className={`
+                            px-3 py-2 text-sm font-medium rounded-md transition-colors
+                            ${currentPage === pageNum
+                              ? 'bg-gray-900 text-white shadow-sm'
+                              : 'bg-white text-gray-700 hover:bg-gray-50 border border-gray-200'
+                            }
+                          `}
+                        >
+                          {pageNum}
+                        </button>
                       );
                     })}
                   </div>
+                  <button
+                    onClick={() => setCurrentPage((prev) => Math.min(totalPages, prev + 1))}
+                    disabled={currentPage === totalPages}
+                    className={`
+                      px-4 py-2 text-sm font-medium rounded-lg transition-colors
+                      ${currentPage === totalPages
+                        ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                        : 'bg-white text-gray-700 hover:bg-gray-50 border-2 border-gray-200'
+                      }
+                    `}
+                  >
+                    Próxima
+                  </button>
                 </div>
-              );
-            })
+              )}
+            </>
           )}
         </div>
       </div>

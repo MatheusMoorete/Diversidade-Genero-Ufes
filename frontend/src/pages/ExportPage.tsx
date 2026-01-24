@@ -6,10 +6,12 @@ import React, { useState, useRef } from 'react';
 import { useMutation } from '@tanstack/react-query';
 import { exportService, backupService } from '@/services/api';
 import { Button } from '@/components/shared/Button';
+import { useToast } from '@/hooks/useToast';
 
 export const ExportPage: React.FC = () => {
   const [importResult, setImportResult] = useState<any>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const { showToast } = useToast();
 
   // Mutation para exportar Excel
   const exportMutation = useMutation({
@@ -24,10 +26,10 @@ export const ExportPage: React.FC = () => {
       a.click();
       window.URL.revokeObjectURL(url);
       document.body.removeChild(a);
-      alert('Arquivo Excel exportado com sucesso!');
+      showToast('Arquivo Excel exportado com sucesso!', 'success');
     },
     onError: (error: any) => {
-      alert(`Erro ao exportar: ${error.response?.data?.detail || error.message}`);
+      showToast(`Erro ao exportar: ${error.response?.data?.detail || error.message}`, 'error');
     },
   });
 
@@ -39,12 +41,13 @@ export const ExportPage: React.FC = () => {
       if (fileInputRef.current) {
         fileInputRef.current.value = '';
       }
-      alert(
-        `Importação concluída!\n${result.pacientes_criados} pacientes criados\n${result.pacientes_com_erro} com erro`
+      showToast(
+        `Importação concluída! ${result.pacientes_criados} criados, ${result.pacientes_com_erro} erros.`,
+        result.pacientes_com_erro > 0 ? 'warning' : 'success'
       );
     },
     onError: (error: any) => {
-      alert(`Erro ao importar: ${error.response?.data?.detail || error.message}`);
+      showToast(`Erro ao importar: ${error.response?.data?.detail || error.message}`, 'error');
     },
   });
 
@@ -61,10 +64,10 @@ export const ExportPage: React.FC = () => {
       a.click();
       window.URL.revokeObjectURL(url);
       document.body.removeChild(a);
-      alert('Backup completo baixado com sucesso!');
+      showToast('Backup completo baixado com sucesso!', 'success');
     },
     onError: (error: any) => {
-      alert(`Erro ao fazer backup: ${error.response?.data?.detail || error.message}`);
+      showToast(`Erro ao fazer backup: ${error.response?.data?.detail || error.message}`, 'error');
     },
   });
 
@@ -73,7 +76,7 @@ export const ExportPage: React.FC = () => {
     if (!file) return;
 
     if (!file.name.toLowerCase().endsWith('.xlsx') && !file.name.toLowerCase().endsWith('.xls')) {
-      alert('Por favor, selecione um arquivo Excel (.xlsx ou .xls)');
+      showToast('Por favor, selecione um arquivo Excel (.xlsx ou .xls)', 'warning');
       return;
     }
 

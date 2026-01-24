@@ -13,6 +13,7 @@ import { Button } from '@/components/shared/Button';
 import { DynamicForm } from '@/components/Form/DynamicForm';
 import { patientService, formService, formQuestionsService } from '@/services/api';
 import { useFormQuestionsCache } from '@/hooks/useFormQuestionsCache';
+import { useToast } from '@/hooks/useToast';
 import type { Patient, FormResponseCreate, FormQuestionsData } from '@/types';
 
 export const FormPage: React.FC = () => {
@@ -22,6 +23,7 @@ export const FormPage: React.FC = () => {
   const [formData, setFormData] = useState<Record<string, unknown>>({});
   const [isCreatingNewPatient, setIsCreatingNewPatient] = useState(false);
   const queryClient = useQueryClient();
+  const { showToast } = useToast();
 
   // Busca as perguntas do formulário padrão com cache persistente e versionamento
   const { data: standardQuestionsData, isLoading: isLoadingStandardQuestions } = useFormQuestionsCache();
@@ -144,9 +146,13 @@ export const FormPage: React.FC = () => {
       setSelectedPatient(null);
       setNextReturnDate('');
       setFormData({});
+      setFormData({});
       setIsCreatingNewPatient(false);
-      alert('Formulário salvo com sucesso!');
+      showToast('Formulário salvo com sucesso!', 'success');
     },
+    onError: () => {
+      showToast('Erro ao salvar formulário. Tente novamente.', 'error');
+    }
   });
 
   // Inicia criação de novo paciente
@@ -176,7 +182,7 @@ export const FormPage: React.FC = () => {
         // Para novo paciente, nome é obrigatório no formulário
         patientName = (formData.patient_name as string) || '';
         if (!patientName || patientName.trim() === '') {
-          alert('O nome do paciente é obrigatório');
+          showToast('O nome do paciente é obrigatório', 'warning');
           return;
         }
         const newPatient = await createPatientMutation.mutateAsync({
@@ -188,7 +194,7 @@ export const FormPage: React.FC = () => {
         patientId = selectedPatient.id;
         patientName = selectedPatient.full_name;
       } else {
-        alert('Selecione ou crie um paciente primeiro');
+        showToast('Selecione ou crie um paciente primeiro', 'info');
         return;
       }
 

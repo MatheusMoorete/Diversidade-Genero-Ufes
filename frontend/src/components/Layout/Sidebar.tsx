@@ -23,10 +23,10 @@ const menuItems: MenuItem[] = [
     path: '/form',
     label: 'Formulário',
     icon: (isActive) => (
-      <svg 
-        className={`w-5 h-5 transition-all duration-300 ${isActive ? 'scale-110' : ''}`} 
-        fill="none" 
-        stroke="currentColor" 
+      <svg
+        className={`w-5 h-5 transition-all duration-300 ${isActive ? 'scale-110' : ''}`}
+        fill="none"
+        stroke="currentColor"
         viewBox="0 0 24 24"
       >
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
@@ -37,10 +37,10 @@ const menuItems: MenuItem[] = [
     path: '/patients',
     label: 'Pacientes',
     icon: (isActive) => (
-      <svg 
-        className={`w-5 h-5 transition-all duration-300 ${isActive ? 'scale-110' : ''}`} 
-        fill="none" 
-        stroke="currentColor" 
+      <svg
+        className={`w-5 h-5 transition-all duration-300 ${isActive ? 'scale-110' : ''}`}
+        fill="none"
+        stroke="currentColor"
         viewBox="0 0 24 24"
       >
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
@@ -51,10 +51,10 @@ const menuItems: MenuItem[] = [
     path: '/returns',
     label: 'Retornos',
     icon: (isActive) => (
-      <svg 
-        className={`w-5 h-5 transition-all duration-300 ${isActive ? 'scale-110' : ''}`} 
-        fill="none" 
-        stroke="currentColor" 
+      <svg
+        className={`w-5 h-5 transition-all duration-300 ${isActive ? 'scale-110' : ''}`}
+        fill="none"
+        stroke="currentColor"
         viewBox="0 0 24 24"
       >
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
@@ -65,10 +65,10 @@ const menuItems: MenuItem[] = [
     path: '/export',
     label: 'Exportar',
     icon: (isActive) => (
-      <svg 
-        className={`w-5 h-5 transition-all duration-300 ${isActive ? 'scale-110 rotate-12' : ''}`} 
-        fill="none" 
-        stroke="currentColor" 
+      <svg
+        className={`w-5 h-5 transition-all duration-300 ${isActive ? 'scale-110 rotate-12' : ''}`}
+        fill="none"
+        stroke="currentColor"
         viewBox="0 0 24 24"
       >
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
@@ -86,7 +86,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
       {/* Overlay para mobile */}
       {isOpen && (
         <div
-          className="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden"
+          className="fixed inset-0 bg-black bg-opacity-50 z-[90] lg:hidden"
           onClick={onClose}
         />
       )}
@@ -100,7 +100,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
           bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900
           text-white
           flex flex-col
-          z-50
+          z-[100]
           transform transition-transform duration-300 ease-in-out
           shadow-2xl lg:shadow-none
           overflow-x-hidden
@@ -114,12 +114,12 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
             <h1 className="text-xl font-bold bg-gradient-to-r from-white to-slate-300 bg-clip-text text-transparent">
               Gestão de Pacientes
             </h1>
-        {user && (
+            {user && (
               <p className="text-sm text-slate-400 mt-2 flex items-center gap-2">
                 <span className="w-1.5 h-1.5 bg-primary-400 rounded-full animate-pulse" />
                 Olá, {user.username}
               </p>
-        )}
+            )}
           </div>
         </div>
 
@@ -137,19 +137,19 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
             </svg>
           </button>
-      </div>
+        </div>
 
-      {/* Menu */}
+        {/* Menu */}
         <nav className="flex-1 p-4 overflow-y-auto overflow-x-hidden">
           <ul className="space-y-1.5">
             {menuItems.map((item, index) => {
-            const isActive = location.pathname === item.path || (item.path === '/patients' && location.pathname.startsWith('/patient/'));
-            return (
+              const isActive = location.pathname === item.path || (item.path === '/patients' && location.pathname.startsWith('/patient/'));
+              return (
                 <li key={item.path} className="overflow-hidden">
-                <Link
-                  to={item.path}
+                  <Link
+                    to={item.path}
                     onClick={onClose}
-                  className={`
+                    className={`
                       group relative flex items-center space-x-3 px-4 py-3 rounded-md
                       transition-all duration-300 ease-out
                       overflow-hidden
@@ -166,7 +166,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
                     {isActive && (
                       <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-8 bg-white rounded-r-full shadow-lg shadow-white/50 animate-pulse" />
                     )}
-                    
+
                     {/* Ícone com animação */}
                     <div className={`
                       transition-transform duration-300
@@ -174,7 +174,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
                     `}>
                       {item.icon(isActive)}
                     </div>
-                    
+
                     {/* Label com efeito */}
                     <span className={`
                       font-medium transition-all duration-300
@@ -187,16 +187,16 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
                     {!isActive && (
                       <div className="absolute inset-0 rounded-md bg-gradient-to-r from-transparent via-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                     )}
-                </Link>
-              </li>
-            );
-          })}
-        </ul>
-      </nav>
+                  </Link>
+                </li>
+              );
+            })}
+          </ul>
+        </nav>
 
-      {/* Footer */}
+        {/* Footer */}
         <div className="p-4 border-t border-slate-700/50">
-        <button
+          <button
             onClick={() => {
               logout();
               onClose();
@@ -211,18 +211,18 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
               group
               overflow-hidden
             "
-        >
-            <svg 
-              className="w-5 h-5 transition-transform duration-300 group-hover:translate-x-1" 
-              fill="none" 
-              stroke="currentColor" 
+          >
+            <svg
+              className="w-5 h-5 transition-transform duration-300 group-hover:translate-x-1"
+              fill="none"
+              stroke="currentColor"
               viewBox="0 0 24 24"
             >
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-          </svg>
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+            </svg>
             <span className="font-medium">Sair</span>
-        </button>
-      </div>
+          </button>
+        </div>
       </aside>
     </>
   );

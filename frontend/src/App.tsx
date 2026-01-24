@@ -11,12 +11,13 @@ import { Sidebar } from '@/components/Layout/Sidebar';
 import { Header } from '@/components/Layout/Header';
 import { ProtectedRoute } from '@/components/Layout/ProtectedRoute';
 import { LoginModal } from '@/components/Layout/LoginModal';
+import { ToastContainer } from '@/components/shared/ToastContainer';
 import { Login } from '@/pages/Login';
 import { Register } from '@/pages/Register';
 import { FormPage } from '@/pages/FormPage';
 import { ReturnPage } from '@/pages/ReturnPage';
 import { ExportPage } from '@/pages/ExportPage';
-import { PatientPage } from '@/pages/PatientPage';
+import PatientProfilePage from '@/pages/PatientProfilePage';
 import { PatientsPage } from '@/pages/PatientsPage';
 import { useAuth } from '@/hooks/useAuth';
 import { setUnauthorizedCallback } from '@/services/api';
@@ -58,7 +59,10 @@ const AppContent: React.FC = () => {
     <BrowserRouter>
       {/* Modal de login para erros 401 */}
       <LoginModal isOpen={showLoginModal} onClose={closeLoginModal} />
-      
+
+      {/* Sistema global de notificações */}
+      <ToastContainer />
+
       <Routes>
         <Route path="/login" element={isAuthenticated ? <Navigate to="/form" /> : <Login />} />
         <Route path="/register" element={isAuthenticated ? <Navigate to="/form" /> : <Register />} />
@@ -77,7 +81,7 @@ const AppContent: React.FC = () => {
                       <Route path="/patients" element={<PatientsPage />} />
                       <Route path="/returns" element={<ReturnPage />} />
                       <Route path="/export" element={<ExportPage />} />
-                      <Route path="/patient/:id" element={<PatientPage />} />
+                      <Route path="/patient/:id" element={<PatientProfilePage />} />
                       <Route path="/" element={<Navigate to="/form" replace />} />
                     </Routes>
                   </div>
