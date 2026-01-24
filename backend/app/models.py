@@ -36,6 +36,10 @@ class Patient(Base):
     
     SEGURANÇA: Cada paciente está vinculado ao usuário que o criou.
     Usuários só podem acessar pacientes que eles mesmos criaram.
+    
+    AUDITORIA: 
+    - updated_at: rastreia última modificação (LGPD)
+    - deleted_at: soft delete para recuperação de dados
     """
     __tablename__ = "patients"
 
@@ -43,6 +47,8 @@ class Patient(Base):
     full_name = Column(String(255), nullable=False, index=True)
     created_by_user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), onupdate=func.now(), nullable=True)
+    deleted_at = Column(DateTime(timezone=True), nullable=True)  # Soft delete
 
     # Relacionamentos
     form_responses = relationship("FormResponse", back_populates="patient", cascade="all, delete-orphan")
@@ -52,6 +58,10 @@ class Patient(Base):
 class FormResponse(Base):
     """
     Modelo para respostas dos formulários dos pacientes.
+    
+    AUDITORIA: 
+    - updated_at: rastreia última modificação (LGPD)
+    - deleted_at: soft delete para recuperação de dados
     """
     __tablename__ = "form_responses"
 
@@ -63,6 +73,8 @@ class FormResponse(Base):
     next_return_date = Column(DateTime(timezone=True), nullable=True)
     created_by_user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), onupdate=func.now(), nullable=True)
+    deleted_at = Column(DateTime(timezone=True), nullable=True)  # Soft delete
 
     # Relacionamentos
     patient = relationship("Patient", back_populates="form_responses")

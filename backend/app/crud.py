@@ -85,9 +85,12 @@ def get_patient(db: Session, patient_id: int) -> Optional[models.Patient]:
         patient_id: ID do paciente
         
     Returns:
-        Objeto Patient se encontrado, None caso contrário
+        Objeto Patient se encontrado (e não deletado), None caso contrário
     """
-    return db.query(models.Patient).filter(models.Patient.id == patient_id).first()
+    return db.query(models.Patient).filter(
+        models.Patient.id == patient_id,
+        models.Patient.deleted_at.is_(None)  # Soft delete filter
+    ).first()
 
 
 def get_patient_by_user(
@@ -110,7 +113,8 @@ def get_patient_by_user(
     """
     return db.query(models.Patient).filter(
         models.Patient.id == patient_id,
-        models.Patient.created_by_user_id == user_id
+        models.Patient.created_by_user_id == user_id,
+        models.Patient.deleted_at.is_(None)  # Soft delete filter
     ).first()
 
 
@@ -139,8 +143,10 @@ def get_patients(
         Lista de objetos Patient
     """
     # Query otimizada: sempre filtra por user_id primeiro (usa índice)
+    # Também filtra por deleted_at IS NULL (soft delete)
     query = db.query(models.Patient).filter(
-        models.Patient.created_by_user_id == user_id
+        models.Patient.created_by_user_id == user_id,
+        models.Patient.deleted_at.is_(None)  # Soft delete filter
     )
     
     # Busca otimizada: se há search, aplica ILIKE
@@ -195,9 +201,10 @@ def update_patient(
 
 def delete_patient(db: Session, patient_id: int, user_id: int) -> bool:
     """
-    Remove um paciente do banco de dados.
+    Remove um paciente do banco de dados (soft delete).
     
     SEGURANÇA: Só remove se o paciente pertencer ao usuário.
+    PERSISTÊNCIA: Usa soft delete - dados podem ser recuperados.
     
     Args:
         db: Sessão do banco de dados
@@ -211,7 +218,8 @@ def delete_patient(db: Session, patient_id: int, user_id: int) -> bool:
     if not db_patient:
         return False
     
-    db.delete(db_patient)
+    # Soft delete: marca como deletado em vez de remover fisicamente
+    db_patient.deleted_at = datetime.now()
     db.commit()
     return True
 
@@ -256,10 +264,11 @@ def get_form_response(db: Session, form_response_id: int) -> Optional[models.For
         form_response_id: ID da resposta
         
     Returns:
-        Objeto FormResponse se encontrado, None caso contrário
+        Objeto FormResponse se encontrado (e não deletado), None caso contrário
     """
     return db.query(models.FormResponse).filter(
-        models.FormResponse.id == form_response_id
+        models.FormResponse.id == form_response_id,
+        models.FormResponse.deleted_at.is_(None)  # Soft delete filter
     ).first()
 
 
@@ -283,7 +292,8 @@ def get_form_response_by_user(
     """
     return db.query(models.FormResponse).filter(
         models.FormResponse.id == form_response_id,
-        models.FormResponse.created_by_user_id == user_id
+        models.FormResponse.created_by_user_id == user_id,
+        models.FormResponse.deleted_at.is_(None)  # Soft delete filter
     ).first()
 
 
@@ -311,7 +321,8 @@ def get_form_responses_by_patient(
     """
     return db.query(models.FormResponse).filter(
         models.FormResponse.patient_id == patient_id,
-        models.FormResponse.created_by_user_id == user_id
+        models.FormResponse.created_by_user_id == user_id,
+        models.FormResponse.deleted_at.is_(None)  # Soft delete filter
     ).offset(skip).limit(limit).all()
 
 
@@ -358,9 +369,10 @@ def update_form_response(
 
 def delete_form_response(db: Session, form_response_id: int, user_id: int) -> bool:
     """
-    Remove uma resposta de formulário do banco de dados.
+    Remove uma resposta de formulário do banco de dados (soft delete).
     
     SEGURANÇA: Só remove se a resposta pertencer ao usuário.
+    PERSISTÊNCIA: Usa soft delete - dados podem ser recuperados.
     
     Args:
         db: Sessão do banco de dados
@@ -374,7 +386,8 @@ def delete_form_response(db: Session, form_response_id: int, user_id: int) -> bo
     if not db_form_response:
         return False
     
-    db.delete(db_form_response)
+    # Soft delete: marca como deletado em vez de remover fisicamente
+    db_form_response.deleted_at = datetime.now()
     db.commit()
     return True
 

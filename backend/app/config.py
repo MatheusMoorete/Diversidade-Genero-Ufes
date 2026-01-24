@@ -25,14 +25,26 @@ if not DATABASE_URL:
     )
 
 # Configurações de Autenticação
-SECRET_KEY = os.getenv("SECRET_KEY", "sua-chave-secreta-super-segura-aqui-mude-em-producao")
+SECRET_KEY = os.getenv("SECRET_KEY")
+if not SECRET_KEY:
+    raise ValueError(
+        "SECRET_KEY não configurada! "
+        "Configure a variável de ambiente SECRET_KEY com uma chave segura. "
+        "Gere com: python -c \"import secrets; print(secrets.token_urlsafe(32))\""
+    )
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
+JWT_ISSUER = "diversidade-genero-ufes"
+JWT_AUDIENCE = "diversidade-genero-ufes-api"
 
 # Configurações de CORS
-# Em produção, especificar domínios permitidos via variável de ambiente
-CORS_ORIGINS_STR = os.getenv("CORS_ORIGINS", "*")
-CORS_ORIGINS = CORS_ORIGINS_STR.split(",") if CORS_ORIGINS_STR != "*" else ["*"]
+# IMPORTANTE: Em produção, especificar domínios permitidos
+CORS_ORIGINS_STR = os.getenv("CORS_ORIGINS", "")
+if not CORS_ORIGINS_STR:
+    # Desenvolvimento: permite localhost
+    CORS_ORIGINS = ["http://localhost:3000", "http://localhost:5173", "http://127.0.0.1:3000"]
+else:
+    CORS_ORIGINS = [origin.strip() for origin in CORS_ORIGINS_STR.split(",") if origin.strip()]
 CORS_ALLOW_CREDENTIALS = True
 CORS_ALLOW_METHODS = ["*"]
 CORS_ALLOW_HEADERS = ["*"]

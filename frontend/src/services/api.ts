@@ -61,14 +61,14 @@ api.interceptors.response.use(
       // Token expirado ou inválido
       localStorage.removeItem('access_token');
       localStorage.removeItem('user');
-      
+
       // Chama o callback para abrir o modal de login
       // Se não houver callback definido, redireciona para a página de login
       if (onUnauthorizedCallback) {
         onUnauthorizedCallback();
       } else {
         // Fallback: redireciona se o callback não estiver configurado
-      window.location.href = '/login';
+        window.location.href = '/login';
       }
     }
     return Promise.reject(error);
@@ -115,8 +115,8 @@ export const patientService = {
    * Busca pacientes com paginação, busca e ordenação opcionais
    */
   async searchPatients(
-    search?: string, 
-    skip: number = 0, 
+    search?: string,
+    skip: number = 0,
     limit: number = 100,
     orderBy?: 'name' | 'created_at'
   ): Promise<Patient[]> {
@@ -241,6 +241,33 @@ export const exportService = {
         'Content-Type': 'multipart/form-data',
       },
     });
+    return response.data;
+  },
+};
+
+/**
+ * Serviço de backup
+ */
+export const backupService = {
+  /**
+   * Baixa backup completo em JSON
+   */
+  async downloadBackup(): Promise<Blob> {
+    const response = await api.get('/api/backup/full', {
+      responseType: 'blob',
+    });
+    return response.data;
+  },
+
+  /**
+   * Obtém estatísticas antes do backup
+   */
+  async getStats(): Promise<{
+    username: string;
+    patients: { active: number; deleted: number; total: number };
+    form_responses: { active: number; deleted: number; total: number };
+  }> {
+    const response = await api.get('/api/backup/stats');
     return response.data;
   },
 };

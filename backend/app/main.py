@@ -29,7 +29,7 @@ from app.config import (
 )
 
 # Importa routers
-from app.routers import auth, patients, forms, excel
+from app.routers import auth, patients, forms, excel, backup
 
 # Configuração de logging
 logging.basicConfig(
@@ -148,6 +148,9 @@ app.include_router(forms.forms_questions_router)
 
 # Excel router
 app.include_router(excel.router)
+
+# Backup router
+app.include_router(backup.router)
 
 
 # Endpoints de sistema (health check, root)

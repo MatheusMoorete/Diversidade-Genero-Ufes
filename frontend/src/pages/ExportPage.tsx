@@ -4,7 +4,7 @@
 
 import React, { useState, useRef } from 'react';
 import { useMutation } from '@tanstack/react-query';
-import { exportService } from '@/services/api';
+import { exportService, backupService } from '@/services/api';
 import { Button } from '@/components/shared/Button';
 
 export const ExportPage: React.FC = () => {
@@ -48,6 +48,26 @@ export const ExportPage: React.FC = () => {
     },
   });
 
+  // Mutation para backup completo
+  const backupMutation = useMutation({
+    mutationFn: backupService.downloadBackup,
+    onSuccess: (blob) => {
+      // Cria link para download
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `backup_completo_${new Date().toISOString().split('T')[0]}.json`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+      alert('Backup completo baixado com sucesso!');
+    },
+    onError: (error: any) => {
+      alert(`Erro ao fazer backup: ${error.response?.data?.detail || error.message}`);
+    },
+  });
+
   const handleImport = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -74,7 +94,7 @@ export const ExportPage: React.FC = () => {
         </div>
 
         {/* Cards Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
           {/* Exportação */}
           <div className="bg-white rounded-xl border border-gray-200 p-6 hover:shadow-lg transition-shadow">
             <div className="flex items-start space-x-4">
@@ -131,6 +151,31 @@ export const ExportPage: React.FC = () => {
               className="w-full mt-4 border-gray-300 text-gray-700 hover:bg-gray-50"
             >
               {importMutation.isPending ? 'Importando...' : 'Selecionar Arquivo'}
+            </Button>
+          </div>
+
+          {/* Backup Completo */}
+          <div className="bg-white rounded-xl border border-gray-200 p-6 hover:shadow-lg transition-shadow">
+            <div className="flex items-start space-x-4">
+              <div className="flex-shrink-0 w-12 h-12 rounded-lg bg-emerald-500/10 flex items-center justify-center">
+                <svg className="w-6 h-6 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
+                </svg>
+              </div>
+              <div className="flex-1">
+                <h2 className="text-xl font-semibold text-gray-900 mb-2">Backup Completo</h2>
+                <p className="text-gray-600 text-sm mb-4 leading-relaxed">
+                  Baixe um backup JSON com todos os dados para segurança extra. Guarde em local seguro.
+                </p>
+              </div>
+            </div>
+            <Button
+              variant="outline"
+              onClick={() => backupMutation.mutate()}
+              isLoading={backupMutation.isPending}
+              className="w-full mt-4 border-emerald-300 text-emerald-700 hover:bg-emerald-50"
+            >
+              {backupMutation.isPending ? 'Gerando backup...' : 'Baixar Backup JSON'}
             </Button>
           </div>
         </div>
