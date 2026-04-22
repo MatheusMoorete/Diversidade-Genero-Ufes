@@ -17,6 +17,8 @@ import { Register } from '@/pages/Register';
 import { FormPage } from '@/pages/FormPage';
 import { ReturnPage } from '@/pages/ReturnPage';
 import { ExportPage } from '@/pages/ExportPage';
+import { BackupHealthPage } from '@/pages/BackupHealthPage';
+import { FormSchemaPage } from '@/pages/FormSchemaPage';
 import PatientProfilePage from '@/pages/PatientProfilePage';
 import { PatientsPage } from '@/pages/PatientsPage';
 import { useAuth } from '@/hooks/useAuth';
@@ -45,7 +47,7 @@ const queryClient = new QueryClient({
 });
 
 const AppContent: React.FC = () => {
-  const { isAuthenticated, showLoginModal, openLoginModal, closeLoginModal } = useAuth();
+  const { isAuthenticated, showLoginModal, openLoginModal, closeLoginModal, refreshUser, user } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   // Configura o callback para abrir o modal quando houver erro 401
@@ -54,6 +56,14 @@ const AppContent: React.FC = () => {
       openLoginModal();
     });
   }, [openLoginModal]);
+
+  useEffect(() => {
+    if (!isAuthenticated) return;
+
+    refreshUser().catch(() => {
+      // O interceptor já trata 401; aqui evitamos quebrar a renderização.
+    });
+  }, [isAuthenticated, refreshUser]);
 
   return (
     <BrowserRouter>
@@ -81,6 +91,14 @@ const AppContent: React.FC = () => {
                       <Route path="/patients" element={<PatientsPage />} />
                       <Route path="/returns" element={<ReturnPage />} />
                       <Route path="/export" element={<ExportPage />} />
+                      <Route
+                        path="/backup-health"
+                        element={user?.is_form_admin ? <BackupHealthPage /> : <Navigate to="/form" replace />}
+                      />
+                      <Route
+                        path="/form-schema"
+                        element={user?.is_form_admin ? <FormSchemaPage /> : <Navigate to="/form" replace />}
+                      />
                       <Route path="/patient/:id" element={<PatientProfilePage />} />
                       <Route path="/" element={<Navigate to="/form" replace />} />
                     </Routes>
@@ -104,4 +122,3 @@ const App: React.FC = () => {
 };
 
 export default App;
-

@@ -15,7 +15,16 @@ import json
 
 from app import crud, models, schemas, auth
 from app.database import get_db
-from app.config import FORM_QUESTIONS_FILE, FORM_QUESTIONS_ADDITIONAL_FILE, RATE_LIMIT_DELETE
+from app.config import RATE_LIMIT_DELETE, RATE_LIMIT_FORM_SCHEMA_WRITE
+from app.form_questions_service import (
+    FORM_KIND_ADDITIONAL,
+    FORM_KIND_STANDARD,
+    add_question,
+    load_form_definition,
+    remove_question,
+    update_question,
+)
+from app.permissions import require_form_schema_admin
 from app.rate_limit import limiter
 
 logger = logging.getLogger(__name__)
@@ -219,8 +228,7 @@ async def get_form_questions(
     - ETag: baseado na versão do formulário para validação condicional
     """
     try:
-        with open(FORM_QUESTIONS_FILE, "r", encoding="utf-8") as f:
-            questions_data = json.load(f)
+        questions_data = load_form_definition(FORM_KIND_STANDARD)
         
         # Obtém versão do formulário para ETag
         version = questions_data.get("version", "unknown")
@@ -271,8 +279,7 @@ async def get_additional_form_questions(
     Headers de cache configurados para otimizar performance.
     """
     try:
-        with open(FORM_QUESTIONS_ADDITIONAL_FILE, "r", encoding="utf-8") as f:
-            questions_data = json.load(f)
+        questions_data = load_form_definition(FORM_KIND_ADDITIONAL)
         
         # Obtém versão do formulário para ETag
         version = questions_data.get("version", "unknown")
@@ -307,3 +314,81 @@ async def get_additional_form_questions(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Erro ao processar arquivo de perguntas do formulário adicional"
         )
+
+
+@forms_questions_router.post("/{form_kind}/questions")
+@limiter.limit(RATE_LIMIT_FORM_SCHEMA_WRITE)
+async def create_form_question(
+    request: Request,
+    form_kind: str,
+    payload: schemas.FormQuestionCreateRequest,
+    current_user: models.User = Depends(require_form_schema_admin),
+):
+    """
+    Adiciona uma nova pergunta a uma seção existente do formulário.
+    Restrito a usuários administradores configurados.
+    """
+    updated_definition = add_question(
+        form_kind=form_kind,
+        section_id=payload.section_id,
+        question=payload.question.model_dump(exclude_none=True),
+        insert_after_question_id=payload.insert_after_question_id,
+    )
+    logger.info(
+        "Pergunta adicionada ao formulário %s por usuário %s: %s",
+        form_kind,
+        current_user.username,
+        payload.question.id,
+    )
+    return updated_definition
+
+
+@forms_questions_router.delete("/{form_kind}/questions/{question_id}")
+@limiter.limit(RATE_LIMIT_FORM_SCHEMA_WRITE)
+async def delete_form_question(
+    request: Request,
+    form_kind: str,
+    question_id: str,
+    current_user: models.User = Depends(require_form_schema_admin),
+):
+    """
+    Remove uma pergunta do formulário quando isso não compromete as regras do sistema.
+    Restrito a usuários administradores configurados.
+    """
+    updated_definition = remove_question(form_kind=form_kind, question_id=question_id)
+    logger.info(
+        "Pergunta removida do formulário %s por usuário %s: %s",
+        form_kind,
+        current_user.username,
+        question_id,
+    )
+    return updated_definition
+
+
+@forms_questions_router.put("/{form_kind}/questions/{question_id}")
+@limiter.limit(RATE_LIMIT_FORM_SCHEMA_WRITE)
+async def update_form_question(
+    request: Request,
+    form_kind: str,
+    question_id: str,
+    payload: schemas.FormQuestionUpdateRequest,
+    current_user: models.User = Depends(require_form_schema_admin),
+):
+    """
+    Atualiza uma pergunta existente sem permitir alterações que quebrem referências do sistema.
+    Restrito a usuários administradores configurados.
+    """
+    updated_definition = update_question(
+        form_kind=form_kind,
+        question_id=question_id,
+        section_id=payload.section_id,
+        question=payload.question.model_dump(exclude_none=True),
+        insert_after_question_id=payload.insert_after_question_id,
+    )
+    logger.info(
+        "Pergunta atualizada no formulário %s por usuário %s: %s",
+        form_kind,
+        current_user.username,
+        question_id,
+    )
+    return updated_definition

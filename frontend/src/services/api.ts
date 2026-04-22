@@ -7,6 +7,7 @@ import axios, { AxiosError, AxiosInstance, InternalAxiosRequestConfig } from 'ax
 import type {
   LoginRequest,
   LoginResponse,
+  User,
   Patient,
   PatientCreate,
   PatientUpdate,
@@ -16,6 +17,9 @@ import type {
   ApiError,
   ImportResult,
   FormQuestionsData,
+  FormQuestionCreatePayload,
+  ManagedFormKind,
+  NeonBackupStatus,
 } from '@/types';
 
 // URL base da API
@@ -103,6 +107,11 @@ export const authService = {
       username,
       password,
     });
+    return response.data;
+  },
+
+  async getCurrentUser(): Promise<User> {
+    const response = await api.get<User>('/api/auth/me');
     return response.data;
   },
 };
@@ -270,6 +279,16 @@ export const backupService = {
     const response = await api.get('/api/backup/stats');
     return response.data;
   },
+
+  async getNeonStatus(): Promise<NeonBackupStatus> {
+    const response = await api.get<NeonBackupStatus>('/api/backup/neon/status');
+    return response.data;
+  },
+
+  async createNeonSnapshot(): Promise<NeonBackupStatus> {
+    const response = await api.post<NeonBackupStatus>('/api/backup/neon/snapshot');
+    return response.data;
+  },
 };
 
 /**
@@ -290,7 +309,31 @@ export const formQuestionsService = {
     const response = await api.get<FormQuestionsData>('/api/form-questions/additional');
     return response.data;
   },
+
+  async addQuestion(
+    formKind: ManagedFormKind,
+    payload: FormQuestionCreatePayload
+  ): Promise<FormQuestionsData> {
+    const response = await api.post<FormQuestionsData>(`/api/form-questions/${formKind}/questions`, payload);
+    return response.data;
+  },
+
+  async removeQuestion(
+    formKind: ManagedFormKind,
+    questionId: string
+  ): Promise<FormQuestionsData> {
+    const response = await api.delete<FormQuestionsData>(`/api/form-questions/${formKind}/questions/${questionId}`);
+    return response.data;
+  },
+
+  async updateQuestion(
+    formKind: ManagedFormKind,
+    questionId: string,
+    payload: FormQuestionCreatePayload
+  ): Promise<FormQuestionsData> {
+    const response = await api.put<FormQuestionsData>(`/api/form-questions/${formKind}/questions/${questionId}`, payload);
+    return response.data;
+  },
 };
 
 export default api;
-

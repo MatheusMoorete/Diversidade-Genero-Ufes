@@ -14,6 +14,7 @@ interface AuthState {
   isAuthenticated: boolean;
   showLoginModal: boolean;
   login: (credentials: LoginRequest) => Promise<void>;
+  refreshUser: () => Promise<void>;
   logout: () => void;
   setUser: (user: User) => void;
   openLoginModal: () => void;
@@ -40,14 +41,7 @@ export const useAuth = create<AuthState>()(
           
           // Armazena token no localStorage
           localStorage.setItem('access_token', response.access_token);
-          
-          // Busca informações do usuário (pode ser implementado no backend)
-          // Por enquanto, criamos um objeto básico
-          const user: User = {
-            id: 0,
-            username: credentials.username,
-            created_at: new Date().toISOString(),
-          };
+          const user = await authService.getCurrentUser();
 
           set({
             user,
@@ -58,6 +52,25 @@ export const useAuth = create<AuthState>()(
         } catch (error) {
           throw error;
         }
+      },
+
+      refreshUser: async () => {
+        const token = localStorage.getItem('access_token');
+        if (!token) {
+          set({
+            user: null,
+            token: null,
+            isAuthenticated: false,
+          });
+          return;
+        }
+
+        const user = await authService.getCurrentUser();
+        set({
+          user,
+          token,
+          isAuthenticated: true,
+        });
       },
 
       /**
@@ -111,4 +124,3 @@ export const useAuth = create<AuthState>()(
     }
   )
 );
-

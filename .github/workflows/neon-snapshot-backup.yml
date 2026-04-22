@@ -1,0 +1,37 @@
+name: Neon Snapshot Backup
+
+on:
+  schedule:
+    - cron: '0 6 * * *'
+  workflow_dispatch:
+
+jobs:
+  create-snapshot:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Validate required secrets
+        env:
+          NEON_API_KEY: ${{ secrets.NEON_API_KEY }}
+          NEON_PROJECT_ID: ${{ secrets.NEON_PROJECT_ID }}
+          NEON_BRANCH_ID: ${{ secrets.NEON_BRANCH_ID }}
+        run: |
+          test -n "$NEON_API_KEY"
+          test -n "$NEON_PROJECT_ID"
+          test -n "$NEON_BRANCH_ID"
+
+      - name: Create Neon snapshot
+        env:
+          NEON_API_KEY: ${{ secrets.NEON_API_KEY }}
+          NEON_PROJECT_ID: ${{ secrets.NEON_PROJECT_ID }}
+          NEON_BRANCH_ID: ${{ secrets.NEON_BRANCH_ID }}
+          NEON_SNAPSHOT_RETENTION_DAYS: ${{ vars.NEON_SNAPSHOT_RETENTION_DAYS }}
+        run: |
+          RETENTION_DAYS="${NEON_SNAPSHOT_RETENTION_DAYS:-30}"
+          SNAPSHOT_NAME="gestao-pacientes-$(date -u +%Y-%m-%d-%H%M%S)"
+          EXPIRES_AT=$(date -u -d "+${RETENTION_DAYS} days" +"%Y-%m-%dT%H:%M:%SZ")
+
+          curl --fail-with-body --silent --show-error \
+            -X POST \
+            -H "Authorization: Bearer ${NEON_API_KEY}" \
+            -H "Accept: application/json" \
+            "https://console.neon.tech/api/v2/projects/${NEON_PROJECT_ID}/branches/${NEON_BRANCH_ID}/snapshot?name=${SNAPSHOT_NAME}&expires_at=${EXPIRES_AT}"

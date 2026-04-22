@@ -18,7 +18,7 @@ interface SidebarProps {
   onClose: () => void;
 }
 
-const menuItems: MenuItem[] = [
+const baseMenuItems: MenuItem[] = [
   {
     path: '/form',
     label: 'Formulário',
@@ -80,6 +80,39 @@ const menuItems: MenuItem[] = [
 export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
   const location = useLocation();
   const { user, logout } = useAuth();
+  const menuItems = user?.is_form_admin
+    ? [
+      ...baseMenuItems,
+      {
+        path: '/backup-health',
+        label: 'Segurança',
+        icon: (isActive: boolean) => (
+          <svg
+            className={`w-5 h-5 transition-all duration-300 ${isActive ? 'scale-110' : ''}`}
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3l7 4v5c0 5-3.5 7.5-7 9-3.5-1.5-7-4-7-9V7l7-4z" />
+          </svg>
+        ),
+      },
+      {
+        path: '/form-schema',
+        label: 'Perguntas',
+        icon: (isActive: boolean) => (
+          <svg
+            className={`w-5 h-5 transition-all duration-300 ${isActive ? 'scale-110' : ''}`}
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h8M8 14h5M5 5h14a2 2 0 012 2v10a2 2 0 01-2 2H9l-4 3V7a2 2 0 012-2z" />
+          </svg>
+        ),
+      },
+    ]
+    : baseMenuItems;
 
   return (
     <>
@@ -227,4 +260,3 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
     </>
   );
 };
-

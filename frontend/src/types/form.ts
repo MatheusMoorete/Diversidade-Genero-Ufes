@@ -33,8 +33,10 @@ export interface FormSection {
 export interface FormQuestionsData {
   version: string;
   last_updated: string;
+  form_type?: string;
+  form_name?: string;
+  description?: string;
   sections: FormSection[];
 }
-
 
 

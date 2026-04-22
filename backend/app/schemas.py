@@ -3,8 +3,8 @@ Schemas Pydantic para validação de dados de entrada e saída.
 Define a estrutura esperada para requisições e respostas da API.
 """
 
-from pydantic import BaseModel, Field, field_validator
-from typing import Optional, Dict, Any
+from pydantic import BaseModel, Field, field_validator, model_validator
+from typing import Optional, Dict, Any, Literal, List
 from datetime import datetime
 
 
@@ -30,9 +30,79 @@ class UserResponse(UserBase):
     """Schema para resposta de usuário (sem senha)."""
     id: int
     created_at: datetime
+    is_form_admin: bool = False
 
     class Config:
         from_attributes = True
+
+
+class NeonSnapshotSummary(BaseModel):
+    id: Optional[str] = None
+    name: Optional[str] = None
+    created_at: Optional[str] = None
+    expires_at: Optional[str] = None
+    source_branch_id: Optional[str] = None
+
+
+class NeonBackupStatusResponse(BaseModel):
+    configured: bool
+    healthy: bool
+    checked_at: str
+    project_id: Optional[str] = None
+    branch_id: Optional[str] = None
+    retention_days: int
+    max_age_hours: int
+    latest_snapshot: Optional[NeonSnapshotSummary] = None
+    created_snapshot: Optional[NeonSnapshotSummary] = None
+    recent_snapshots: List[NeonSnapshotSummary] = Field(default_factory=list)
+    issues: List[str] = Field(default_factory=list)
+    latest_snapshot_age_hours: Optional[float] = None
+
+
+class FormQuestionConditional(BaseModel):
+    depends_on: str = Field(..., min_length=2, max_length=64)
+    value: Optional[str | bool] = None
+    value_not: Optional[str] = None
+
+    @model_validator(mode="after")
+    def validate_conditional(self) -> "FormQuestionConditional":
+        if self.value is None and self.value_not is None:
+            raise ValueError("Conditional deve informar value ou value_not")
+        if self.value is not None and self.value_not is not None:
+            raise ValueError("Conditional deve informar apenas value ou value_not")
+        return self
+
+
+class FormQuestionCalculated(BaseModel):
+    formula: str = Field(..., min_length=1, max_length=120)
+    depends_on: List[str] = Field(..., min_length=1)
+
+
+class FormQuestionDefinition(BaseModel):
+    id: str = Field(..., min_length=2, max_length=64)
+    label: str = Field(..., min_length=1, max_length=300)
+    type: Literal["text", "textarea", "number", "boolean", "select", "multiselect", "date", "tel", "radio", "checkbox"]
+    required: bool = False
+    options: Optional[List[str]] = None
+    placeholder: Optional[str] = Field(None, max_length=200)
+    min: Optional[float] = None
+    max: Optional[float] = None
+    readonly: bool = False
+    allow_other: bool = False
+    conditional: Optional[FormQuestionConditional] = None
+    calculated: Optional[FormQuestionCalculated] = None
+
+
+class FormQuestionCreateRequest(BaseModel):
+    section_id: str = Field(..., min_length=2, max_length=64)
+    insert_after_question_id: Optional[str] = Field(None, min_length=2, max_length=64)
+    question: FormQuestionDefinition
+
+
+class FormQuestionUpdateRequest(BaseModel):
+    section_id: str = Field(..., min_length=2, max_length=64)
+    insert_after_question_id: Optional[str] = Field(None, min_length=2, max_length=64)
+    question: FormQuestionDefinition
 
 
 # Schemas para Patient

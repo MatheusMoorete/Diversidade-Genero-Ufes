@@ -195,7 +195,7 @@ export const ReturnPage: React.FC = () => {
                               ${
                                 isTodayReturn
                                   ? 'border-[#4A6FA5] bg-gradient-to-r from-[#4A6FA5]/5 to-transparent'
-                                  : daysUntilReturn <= 3
+                                  : daysUntilReturn > 0 && daysUntilReturn <= 3
                                     ? 'border-yellow-300 bg-yellow-50/30'
                                     : 'border-gray-200'
                               }

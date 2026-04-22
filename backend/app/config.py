@@ -6,6 +6,13 @@ Todas as configurações importantes em um único lugar para fácil manutenção
 import os
 from pathlib import Path
 
+
+def _get_int_env(name: str, default: int) -> int:
+    raw_value = os.getenv(name, "").strip()
+    if not raw_value:
+        return default
+    return int(raw_value)
+
 # Diretório base do projeto
 BASE_DIR = Path(__file__).parent.parent
 
@@ -39,12 +46,28 @@ JWT_AUDIENCE = "diversidade-genero-ufes-api"
 
 # Configurações de CORS
 # IMPORTANTE: Em produção, especificar domínios permitidos
+LOCAL_DEV_CORS_ORIGINS = {
+    "http://localhost:3000",
+    "http://localhost:4173",
+    "http://localhost:5173",
+    "http://127.0.0.1:3000",
+    "http://127.0.0.1:4173",
+    "http://127.0.0.1:5173",
+}
+
 CORS_ORIGINS_STR = os.getenv("CORS_ORIGINS", "")
-if not CORS_ORIGINS_STR:
-    # Desenvolvimento: permite localhost
-    CORS_ORIGINS = ["http://localhost:3000", "http://localhost:5173", "http://127.0.0.1:3000"]
+configured_cors_origins = {
+    origin.strip()
+    for origin in CORS_ORIGINS_STR.split(",")
+    if origin.strip()
+}
+
+if configured_cors_origins:
+    # Mantém os domínios explicitamente configurados e adiciona apenas
+    # origens locais seguras para desenvolvimento.
+    CORS_ORIGINS = sorted(configured_cors_origins | LOCAL_DEV_CORS_ORIGINS)
 else:
-    CORS_ORIGINS = [origin.strip() for origin in CORS_ORIGINS_STR.split(",") if origin.strip()]
+    CORS_ORIGINS = sorted(LOCAL_DEV_CORS_ORIGINS)
 CORS_ALLOW_CREDENTIALS = True
 CORS_ALLOW_METHODS = ["*"]
 CORS_ALLOW_HEADERS = ["*"]
@@ -61,6 +84,8 @@ RATE_LIMIT_DEFAULT = "100/hour"
 RATE_LIMIT_DELETE = "50/hour"
 RATE_LIMIT_EXCEL = "10/hour"
 RATE_LIMIT_BACKUP = "5/hour"
+RATE_LIMIT_FORM_SCHEMA_WRITE = "20/hour"
+RATE_LIMIT_NEON_BACKUP_WRITE = "6/day"
 
 # Configurações de SQL
 SQL_ECHO = os.getenv("SQL_ECHO", "False").lower() == "true"
@@ -70,6 +95,17 @@ EXPORT_DIR = BASE_DIR / "exports"
 FORM_QUESTIONS_FILE = BASE_DIR / "app" / "form_questions.json"
 FORM_QUESTIONS_ADDITIONAL_FILE = BASE_DIR / "app" / "form_questions_additional.json"
 EXCEL_MAX_UPLOAD_SIZE_BYTES = int(os.getenv("EXCEL_MAX_UPLOAD_SIZE_BYTES", str(5 * 1024 * 1024)))
+FORM_SCHEMA_ADMIN_USERS = {"sistema"} | {
+    username.strip().lower()
+    for username in os.getenv("FORM_SCHEMA_ADMIN_USERS", "").split(",")
+    if username.strip()
+}
+NEON_API_KEY = os.getenv("NEON_API_KEY", "").strip()
+NEON_PROJECT_ID = os.getenv("NEON_PROJECT_ID", "").strip()
+NEON_BRANCH_ID = os.getenv("NEON_BRANCH_ID", "").strip()
+NEON_BACKUP_RETENTION_DAYS = _get_int_env("NEON_BACKUP_RETENTION_DAYS", 30)
+NEON_BACKUP_MAX_AGE_HOURS = _get_int_env("NEON_BACKUP_MAX_AGE_HOURS", 36)
+NEON_API_BASE_URL = "https://console.neon.tech/api/v2"
 
 # Configurações da Aplicação
 APP_TITLE = "Gestão de Pacientes"

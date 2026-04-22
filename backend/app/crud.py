@@ -17,6 +17,12 @@ def _normalize_datetime(value: datetime) -> datetime:
     return value
 
 
+def _end_of_return_visibility_window(value: datetime) -> datetime:
+    weekday = value.weekday()
+    days_until_thursday = max(0, 3 - weekday)
+    return value + timedelta(days=days_until_thursday)
+
+
 # CRUD para User
 def create_user(db: Session, user: schemas.UserCreate) -> models.User:
     """
@@ -382,7 +388,9 @@ def get_upcoming_returns(
 
         next_return_date = _normalize_datetime(response.next_return_date)
 
-        if today <= next_return_date <= end_date:
+        visible_until = _end_of_return_visibility_window(next_return_date)
+
+        if visible_until >= today and next_return_date <= end_date:
             upcoming.append(response)
 
     upcoming.sort(key=lambda response: (_normalize_datetime(response.next_return_date), response.id))

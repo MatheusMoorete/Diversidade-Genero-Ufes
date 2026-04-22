@@ -12,6 +12,7 @@ import logging
 from app import crud, models, schemas, auth
 from app.database import get_db
 from app.config import RATE_LIMIT_LOGIN, RATE_LIMIT_REGISTER
+from app.permissions import is_form_schema_admin
 from app.rate_limit import limiter
 
 logger = logging.getLogger(__name__)
@@ -97,3 +98,18 @@ async def login(
     # Log sem expor senha
     logger.info(f"Login bem-sucedido para usuário: {user.username}")
     return {"access_token": access_token, "token_type": "bearer"}
+
+
+@router.get("/me", response_model=schemas.UserResponse)
+async def read_current_user(
+    current_user: models.User = Depends(auth.get_current_user),
+):
+    """
+    Retorna os dados do usuário autenticado e suas permissões administrativas.
+    """
+    return schemas.UserResponse(
+        id=current_user.id,
+        username=current_user.username,
+        created_at=current_user.created_at,
+        is_form_admin=is_form_schema_admin(current_user),
+    )

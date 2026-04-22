@@ -31,5 +31,9 @@ export const queryKeys = {
     detail: (id: number) => 
       [...queryKeys.formResponses.all, 'detail', id] as const,
   },
-} as const;
 
+  backup: {
+    all: ['backup'] as const,
+    neonStatus: () => [...queryKeys.backup.all, 'neon-status'] as const,
+  },
+} as const;
