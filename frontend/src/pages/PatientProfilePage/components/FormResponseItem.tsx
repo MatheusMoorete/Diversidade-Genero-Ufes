@@ -11,7 +11,6 @@ import type { FormResponse, FormQuestionsData, FormResponseUpdate } from '@/type
 interface FormResponseItemProps {
     formResponse: FormResponse;
     index: number;
-    totalForms: number;
     viewMode: 'categorized' | 'full';
     fieldLabelsMap: Record<string, string>;
     questionsData: FormQuestionsData | undefined;
@@ -27,7 +26,6 @@ interface FormResponseItemProps {
 export const FormResponseItem: React.FC<FormResponseItemProps> = ({
     formResponse,
     index,
-    totalForms,
     viewMode,
     fieldLabelsMap,
     questionsData,
@@ -151,7 +149,7 @@ export const FormResponseItem: React.FC<FormResponseItemProps> = ({
                 <div className="flex items-center justify-between gap-4">
                     <div className="flex items-center gap-3 sm:gap-4">
                         <div className="flex-shrink-0 w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-[#4A6FA5] text-white flex items-center justify-center font-bold text-base sm:text-lg shadow-sm">
-                            {totalForms - index}
+                            {index + 1}
                         </div>
                         <div>
                             <h3 className="font-bold text-gray-900 text-sm sm:text-base">
@@ -194,6 +192,7 @@ export const FormResponseItem: React.FC<FormResponseItemProps> = ({
                                 data={formResponse.form_data as Record<string, unknown>}
                                 fieldLabelsMap={fieldLabelsMap}
                                 fields={category.fields}
+                                showEmptyFields={key === 'lab'}
                             />
                         ))}
                     </div>

@@ -3,7 +3,7 @@ Schemas Pydantic para validação de dados de entrada e saída.
 Define a estrutura esperada para requisições e respostas da API.
 """
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 from typing import Optional, Dict, Any
 from datetime import datetime
 
@@ -17,6 +17,13 @@ class UserBase(BaseModel):
 class UserCreate(UserBase):
     """Schema para criação de usuário."""
     password: str = Field(..., min_length=6, description="Senha do usuário (mínimo 6 caracteres)")
+
+    @field_validator("password")
+    @classmethod
+    def validate_password_bytes(cls, value: str) -> str:
+        if len(value.encode("utf-8")) > 72:
+            raise ValueError("Senha deve ter no máximo 72 bytes em UTF-8")
+        return value
 
 
 class UserResponse(UserBase):
@@ -106,4 +113,3 @@ class LoginRequest(BaseModel):
     """Schema para requisição de login."""
     username: str
     password: str
-

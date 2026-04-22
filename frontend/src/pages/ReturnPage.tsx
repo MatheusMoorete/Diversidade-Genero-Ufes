@@ -1,6 +1,6 @@
 /**
- * Página de Retornos Agendados.
- * Mostra os próximos retornos dos próximos 15 dias de todos os pacientes.
+ * Pagina de Retornos Agendados.
+ * Mostra os proximos retornos por janela de 30, 90 ou 180 dias.
  */
 
 import React, { useMemo } from 'react';
@@ -18,16 +18,14 @@ interface ReturnWithPatient extends FormResponse {
 
 export const ReturnPage: React.FC = () => {
   const navigate = useNavigate();
-  const [filterDays, setFilterDays] = React.useState<15 | 30 | 90>(15);
+  const [filterDays, setFilterDays] = React.useState<30 | 90 | 180>(180);
   const [currentPage, setCurrentPage] = React.useState(1);
-  const itemsPerPage = 5; // Mostra 5 datas por página (frontend pagination)
+  const itemsPerPage = 5;
 
-  // Reseta página quando filtro muda
   React.useEffect(() => {
     setCurrentPage(1);
   }, [filterDays]);
 
-  // Busca todos os pacientes (para associar aos retornos)
   const { data: patients = [], isLoading: isLoadingPatients } = useQuery({
     queryKey: queryKeys.patients.list({}),
     queryFn: () => patientService.searchPatients('', 0, 1000),
@@ -35,7 +33,6 @@ export const ReturnPage: React.FC = () => {
     gcTime: 1000 * 60 * 5,
   });
 
-  // Busca todos os retornos dos próximos N dias
   const { data: allFormResponses = [], isLoading: isLoadingReturns } = useQuery({
     queryKey: queryKeys.formResponses.upcomingReturns(filterDays),
     queryFn: () => formService.getUpcomingReturns(filterDays),
@@ -43,21 +40,11 @@ export const ReturnPage: React.FC = () => {
     gcTime: 1000 * 60 * 3,
   });
 
-  // Filtra retornos dos próximos N dias e adiciona informações do paciente
   const upcomingReturns = useMemo(() => {
-    const today = startOfDay(new Date());
-
     const returnsWithPatient: ReturnWithPatient[] = allFormResponses
       .map((response) => {
-        const patient = patients.find((p) => p.id === response.patient_id);
+        const patient = patients.find((item) => item.id === response.patient_id);
         return { ...response, patient };
-      })
-      .filter((response) => {
-        if (!response.next_return_date) return false;
-        const returnDate = startOfDay(parseISO(response.next_return_date));
-        const daysDiff = differenceInDays(returnDate, today);
-        // Inclui retornos de hoje até N dias no futuro
-        return daysDiff >= 0 && daysDiff <= filterDays;
       })
       .sort((a, b) => {
         if (!a.next_return_date || !b.next_return_date) return 0;
@@ -67,12 +54,11 @@ export const ReturnPage: React.FC = () => {
       });
 
     return returnsWithPatient;
-  }, [allFormResponses, patients, filterDays]);
+  }, [allFormResponses, patients]);
 
   const today = startOfDay(new Date());
   const isLoading = isLoadingPatients || isLoadingReturns;
 
-  // Agrupa retornos por data
   const returnsByDate = useMemo(() => {
     const grouped: Record<string, ReturnWithPatient[]> = {};
 
@@ -94,7 +80,6 @@ export const ReturnPage: React.FC = () => {
     return Object.keys(returnsByDate).sort();
   }, [returnsByDate]);
 
-  // Lógica de Paginação (Frontend)
   const totalItems = sortedDates.length;
   const totalPages = Math.ceil(totalItems / itemsPerPage);
 
@@ -103,10 +88,15 @@ export const ReturnPage: React.FC = () => {
     return sortedDates.slice(start, start + itemsPerPage);
   }, [sortedDates, currentPage]);
 
+  const formatFilterLabel = (days: number) => {
+    if (days === 180) return '6 meses';
+    if (days === 90) return '3 meses';
+    return `${days} dias`;
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 py-8 px-4 sm:py-12 sm:px-6 lg:px-8">
       <div className="max-w-4xl mx-auto">
-        {/* Header */}
         <div className="mb-10">
           <div className="mb-6 flex flex-col md:flex-row md:items-end justify-between gap-4">
             <div className="text-left">
@@ -115,29 +105,28 @@ export const ReturnPage: React.FC = () => {
                 <span className="md:hidden">Retornos</span>
               </h1>
               <p className="text-gray-500 text-lg">
-                Próximos retornos dos próximos {filterDays === 90 ? '3 meses' : `${filterDays} dias`}
+                Proximos retornos dos proximos {formatFilterLabel(filterDays)}
               </p>
             </div>
 
-            {/* Filtro de Período */}
             <div className="flex bg-gray-200/50 p-1 rounded-xl shadow-inner-sm w-full md:w-auto">
-              {[15, 30, 90].map((days) => (
+              {[30, 90, 180].map((days) => (
                 <button
                   key={days}
-                  onClick={() => setFilterDays(days as 15 | 30 | 90)}
-                  className={`flex-1 md:flex-initial px-4 py-2 rounded-lg text-sm font-bold transition-all duration-300 ${filterDays === days
-                    ? 'bg-white text-[#4A6FA5] shadow-md transform scale-[1.02]'
-                    : 'text-gray-500 hover:text-gray-700'
-                    }`}
+                  onClick={() => setFilterDays(days as 30 | 90 | 180)}
+                  className={`flex-1 md:flex-initial px-4 py-2 rounded-lg text-sm font-bold transition-all duration-300 ${
+                    filterDays === days
+                      ? 'bg-white text-[#4A6FA5] shadow-md transform scale-[1.02]'
+                      : 'text-gray-500 hover:text-gray-700'
+                  }`}
                 >
-                  {days === 90 ? '3 Meses' : `${days} Dias`}
+                  {days === 180 ? '6 Meses' : days === 90 ? '3 Meses' : `${days} Dias`}
                 </button>
               ))}
             </div>
           </div>
         </div>
 
-        {/* Lista de Retornos */}
         <div className="space-y-6">
           {isLoading ? (
             <div className="text-center py-12">
@@ -152,7 +141,7 @@ export const ReturnPage: React.FC = () => {
                 </svg>
               </div>
               <p className="text-gray-500 text-lg">
-                Nenhum retorno agendado para os próximos {filterDays === 90 ? '3 meses' : `${filterDays} dias`}
+                Nenhum retorno agendado para os proximos {formatFilterLabel(filterDays)}
               </p>
             </div>
           ) : (
@@ -166,7 +155,6 @@ export const ReturnPage: React.FC = () => {
 
                 return (
                   <div key={dateKey} className="space-y-4">
-                    {/* Cabeçalho da Data */}
                     <div className="flex items-center space-x-3">
                       <div className="flex-1 border-t border-gray-200"></div>
                       <div className="flex items-center space-x-2">
@@ -174,16 +162,16 @@ export const ReturnPage: React.FC = () => {
                           {isTodayReturn
                             ? 'Hoje'
                             : isTomorrow
-                              ? 'Amanhã'
+                              ? 'Amanha'
                               : (
                                 <>
-                                  <span className="md:hidden">{format(returnDate, "EEEE", { locale: ptBR })}</span>
+                                  <span className="md:hidden">{format(returnDate, 'EEEE', { locale: ptBR })}</span>
                                   <span className="hidden md:inline">{format(returnDate, "EEEE, dd 'de' MMMM", { locale: ptBR })}</span>
                                 </>
                               )}
                         </span>
                         <span className="text-sm text-gray-500">
-                          ({format(returnDate, "dd/MM/yyyy", { locale: ptBR })})
+                          ({format(returnDate, 'dd/MM/yyyy', { locale: ptBR })})
                         </span>
                         {isTodayReturn && (
                           <span className="px-2 py-1 bg-[#4A6FA5] text-white text-xs font-medium rounded-full">
@@ -194,7 +182,6 @@ export const ReturnPage: React.FC = () => {
                       <div className="flex-1 border-t border-gray-200"></div>
                     </div>
 
-                    {/* Cards de Retornos */}
                     <div className="space-y-3">
                       {returns.map((returnItem) => {
                         const daysUntilReturn = differenceInDays(returnDate, today);
@@ -203,32 +190,33 @@ export const ReturnPage: React.FC = () => {
                           <div
                             key={returnItem.id}
                             className={`
-                            bg-white rounded-xl shadow-sm border-2 p-6
-                            hover:shadow-md transition-all cursor-pointer
-                            ${isTodayReturn
-                                ? 'border-[#4A6FA5] bg-gradient-to-r from-[#4A6FA5]/5 to-transparent'
-                                : daysUntilReturn <= 3
-                                  ? 'border-yellow-300 bg-yellow-50/30'
-                                  : 'border-gray-200'
+                              bg-white rounded-xl shadow-sm border-2 p-6
+                              hover:shadow-md transition-all cursor-pointer
+                              ${
+                                isTodayReturn
+                                  ? 'border-[#4A6FA5] bg-gradient-to-r from-[#4A6FA5]/5 to-transparent'
+                                  : daysUntilReturn <= 3
+                                    ? 'border-yellow-300 bg-yellow-50/30'
+                                    : 'border-gray-200'
                               }
-                        `}
+                            `}
                             onClick={() => navigate(`/patient/${returnItem.patient_id}`)}
                           >
                             <div className="flex items-start justify-between">
                               <div className="flex-1">
                                 <h3 className="text-lg font-bold text-gray-900 mb-2">
-                                  {returnItem.patient?.full_name || 'Paciente não encontrado'}
+                                  {returnItem.patient?.full_name || 'Paciente nao encontrado'}
                                 </h3>
                                 <div className="flex flex-wrap gap-4 text-sm text-gray-600 mb-3">
                                   <p>
-                                    Última consulta:{' '}
-                                    {format(parseISO(returnItem.response_date), "dd/MM/yyyy", {
+                                    Ultima consulta:{' '}
+                                    {format(parseISO(returnItem.response_date), 'dd/MM/yyyy', {
                                       locale: ptBR,
                                     })}
                                   </p>
                                   {returnItem.uses_hormone_over_1year && (
                                     <span className="inline-flex items-center px-2 py-1 bg-blue-100 text-blue-800 text-xs font-medium rounded">
-                                      Usa hormônio há mais de 1 ano
+                                      Usa hormonio ha mais de 1 ano
                                     </span>
                                   )}
                                 </div>
@@ -272,7 +260,6 @@ export const ReturnPage: React.FC = () => {
                 );
               })}
 
-              {/* Controles de Paginação */}
               {totalPages > 1 && (
                 <div className="flex items-center justify-center space-x-2 pt-8">
                   <button
@@ -280,9 +267,10 @@ export const ReturnPage: React.FC = () => {
                     disabled={currentPage === 1}
                     className={`
                       px-4 py-2 text-sm font-medium rounded-lg transition-colors
-                      ${currentPage === 1
-                        ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                        : 'bg-white text-gray-700 hover:bg-gray-50 border-2 border-gray-200'
+                      ${
+                        currentPage === 1
+                          ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                          : 'bg-white text-gray-700 hover:bg-gray-50 border-2 border-gray-200'
                       }
                     `}
                   >
@@ -306,9 +294,10 @@ export const ReturnPage: React.FC = () => {
                           onClick={() => setCurrentPage(pageNum as number)}
                           className={`
                             px-3 py-2 text-sm font-medium rounded-md transition-colors
-                            ${currentPage === pageNum
-                              ? 'bg-gray-900 text-white shadow-sm'
-                              : 'bg-white text-gray-700 hover:bg-gray-50 border border-gray-200'
+                            ${
+                              currentPage === pageNum
+                                ? 'bg-gray-900 text-white shadow-sm'
+                                : 'bg-white text-gray-700 hover:bg-gray-50 border border-gray-200'
                             }
                           `}
                         >
@@ -322,13 +311,14 @@ export const ReturnPage: React.FC = () => {
                     disabled={currentPage === totalPages}
                     className={`
                       px-4 py-2 text-sm font-medium rounded-lg transition-colors
-                      ${currentPage === totalPages
-                        ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                        : 'bg-white text-gray-700 hover:bg-gray-50 border-2 border-gray-200'
+                      ${
+                        currentPage === totalPages
+                          ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                          : 'bg-white text-gray-700 hover:bg-gray-50 border-2 border-gray-200'
                       }
                     `}
                   >
-                    Próxima
+                    Proxima
                   </button>
                 </div>
               )}
@@ -339,4 +329,3 @@ export const ReturnPage: React.FC = () => {
     </div>
   );
 };
-

@@ -56,9 +56,11 @@ LOG_FORMAT = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 
 # Configurações de Rate Limiting
 RATE_LIMIT_LOGIN = "5/minute"
+RATE_LIMIT_REGISTER = "3/hour"
 RATE_LIMIT_DEFAULT = "100/hour"
 RATE_LIMIT_DELETE = "50/hour"
 RATE_LIMIT_EXCEL = "10/hour"
+RATE_LIMIT_BACKUP = "5/hour"
 
 # Configurações de SQL
 SQL_ECHO = os.getenv("SQL_ECHO", "False").lower() == "true"
@@ -67,6 +69,7 @@ SQL_ECHO = os.getenv("SQL_ECHO", "False").lower() == "true"
 EXPORT_DIR = BASE_DIR / "exports"
 FORM_QUESTIONS_FILE = BASE_DIR / "app" / "form_questions.json"
 FORM_QUESTIONS_ADDITIONAL_FILE = BASE_DIR / "app" / "form_questions_additional.json"
+EXCEL_MAX_UPLOAD_SIZE_BYTES = int(os.getenv("EXCEL_MAX_UPLOAD_SIZE_BYTES", str(5 * 1024 * 1024)))
 
 # Configurações da Aplicação
 APP_TITLE = "Gestão de Pacientes"

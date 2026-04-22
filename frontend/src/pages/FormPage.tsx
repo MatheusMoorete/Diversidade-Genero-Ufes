@@ -4,7 +4,7 @@
  */
 
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
 import { queryKeys } from '@/config/queryKeys';
 import { SearchInput } from '@/components/PatientSearch/SearchInput';
@@ -15,15 +15,19 @@ import { patientService, formService, formQuestionsService } from '@/services/ap
 import { useFormQuestionsCache } from '@/hooks/useFormQuestionsCache';
 import { useToast } from '@/hooks/useToast';
 import type { Patient, FormResponseCreate, FormQuestionsData } from '@/types';
+import { getReturnQuestionsData } from '@/utils/formQuestions';
 
 export const FormPage: React.FC = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
   const [nextReturnDate, setNextReturnDate] = useState('');
   const [formData, setFormData] = useState<Record<string, unknown>>({});
   const [isCreatingNewPatient, setIsCreatingNewPatient] = useState(false);
   const queryClient = useQueryClient();
   const { showToast } = useToast();
+  const selectedPatientIdFromUrl = searchParams.get('patientId');
+  const parsedPatientIdFromUrl = selectedPatientIdFromUrl ? Number(selectedPatientIdFromUrl) : null;
 
   // Busca as perguntas do formulário padrão com cache persistente e versionamento
   const { data: standardQuestionsData, isLoading: isLoadingStandardQuestions } = useFormQuestionsCache();
@@ -35,6 +39,20 @@ export const FormPage: React.FC = () => {
     staleTime: 1000 * 60 * 10, // 10 minutos - form questions mudam raramente
     gcTime: 1000 * 60 * 30, // 30 minutos em cache
   });
+
+  const { data: preselectedPatient } = useQuery<Patient>({
+    queryKey: parsedPatientIdFromUrl ? queryKeys.patients.detail(parsedPatientIdFromUrl) : ['patient', 'preselected', null],
+    queryFn: () => patientService.getPatient(parsedPatientIdFromUrl!),
+    enabled: !!parsedPatientIdFromUrl,
+    staleTime: 1000 * 60 * 2,
+  });
+
+  React.useEffect(() => {
+    if (preselectedPatient) {
+      setSelectedPatient(preselectedPatient);
+      setIsCreatingNewPatient(false);
+    }
+  }, [preselectedPatient]);
 
   // Verifica se o paciente selecionado já tem formulários anteriores (para determinar se é primeira vez)
   const { data: existingFormResponses = [] } = useQuery({
@@ -57,7 +75,7 @@ export const FormPage: React.FC = () => {
   React.useEffect(() => {
     if (!isFirstTime && existingFormResponses.length > 0 && selectedPatient) {
       // Pega o formulário mais recente
-      const latestForm = existingFormResponses[0];
+      const latestForm = existingFormResponses[existingFormResponses.length - 1];
       if (latestForm.form_data) {
         // Pre-popula campos essenciais para que as questões condicionais funcionem
         const previousData = latestForm.form_data as Record<string, unknown>;
@@ -102,6 +120,8 @@ export const FormPage: React.FC = () => {
     }
   }, [formData.hormone_therapy_over_one_year]);
 
+  const returnQuestionsData = getReturnQuestionsData(additionalQuestionsData, standardQuestionsData);
+
   // Combina formulários se for primeira vez
   // Se for primeira vez: combina ambos os formulários (padrão + adicional)
   // Se for retorno: mostra apenas o formulário adicional
@@ -113,7 +133,7 @@ export const FormPage: React.FC = () => {
         sections: [...standardQuestionsData.sections, ...additionalQuestionsData.sections],
       }
       : standardQuestionsData || null) // Fallback: mostra padrão se adicional ainda não carregou
-    : additionalQuestionsData || null; // Retorno: apenas adicional
+    : returnQuestionsData || null; // Retorno: apenas adicional relevante
 
   const isLoadingQuestions = (isFirstTime && isLoadingStandardQuestions) ||
     (isFirstTime && isLoadingAdditionalQuestions) ||

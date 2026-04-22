@@ -14,6 +14,8 @@ import logging
 
 from app import models, auth, backup_service
 from app.database import get_db
+from app.config import RATE_LIMIT_BACKUP
+from app.rate_limit import limiter
 
 logger = logging.getLogger(__name__)
 
@@ -22,6 +24,7 @@ router = APIRouter(prefix="/api/backup", tags=["Backup"])
 
 
 @router.get("/full")
+@limiter.limit(RATE_LIMIT_BACKUP)
 async def get_full_backup(
     request: Request,
     db: Session = Depends(get_db),
@@ -54,11 +57,12 @@ async def get_full_backup(
         logger.error(f"Erro ao gerar backup: {str(e)}", exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Erro ao gerar backup: {str(e)}"
+            detail="Erro interno ao gerar backup"
         )
 
 
 @router.get("/stats")
+@limiter.limit(RATE_LIMIT_BACKUP)
 async def get_backup_stats(
     request: Request,
     db: Session = Depends(get_db),
@@ -112,5 +116,5 @@ async def get_backup_stats(
         logger.error(f"Erro ao obter estatísticas: {str(e)}", exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Erro ao obter estatísticas: {str(e)}"
+            detail="Erro interno ao obter estatísticas de backup"
         )

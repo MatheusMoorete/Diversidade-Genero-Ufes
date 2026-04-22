@@ -1,0 +1,56 @@
+{
+  "exclude_rows": [
+    {
+      "source_name": "legacy_forms",
+      "source_row": 88
+    },
+    {
+      "source_name": "legacy_forms",
+      "source_row": 89
+    },
+    {
+      "source_name": "legacy_forms",
+      "source_row": 90
+    },
+    {
+      "source_name": "legacy_forms",
+      "source_row": 91
+    },
+    {
+      "source_name": "legacy_forms",
+      "source_row": 92
+    },
+    {
+      "source_name": "current_forms",
+      "source_row": 28
+    },
+    {
+      "source_name": "current_forms",
+      "source_row": 44
+    },
+    {
+      "source_name": "current_forms",
+      "source_row": 63
+    }
+  ],
+  "merge_patient_keys": {
+    "alex pietro dos santos|dob:2000-10-04": "alex pietro dos santos brito|dob:2000-10-04",
+    "benjamim vicente nascimento|dob:2001-11-26": "benjamin vicente nascimento|dob:2001-11-26",
+    "benjamin felipe|dob:2000-07-12": "benjamin felipe cota villa real|dob:2000-07-12",
+    "bê|dob:1992-05-10": "bê kobe santos da silva|dob:1992-05-10",
+    "haysla pereira real|dob:1998-06-25": "haisla pereira real|dob:1998-06-25",
+    "hugo de oliveira guimarăes|dob:1995-02-06": "hugo de oliveira guimarăes - 34668913|dob:1995-02-06",
+    "hugo de oliveira guimarães|dob:1995-02-06": "hugo de oliveira guimarães - 34668913|dob:1995-02-06",
+    "jack|dob:1999-06-02": "jack darah coelho marcelino|dob:1999-06-02",
+    "julian silva barcelos|dob:1988-07-31": "julian silva barcelos - 33711920|dob:1988-07-31",
+    "luane|dob:2003-07-01": "luane sophia de araujo flores|dob:2003-07-01",
+    "miguel medeiros perin|dob:1980-11-30": "miguel medeiros perim|dob:1980-11-30",
+    "nicolas henrique azevedo rios|dob:2003-08-26": "nicolas henrique azevedo reis|dob:2003-08-26",
+    "nicolas lis de almeida|dob:2003-07-24": "nicolas lis de almeid|dob:2003-07-24",
+    "rafael detonei mielke|dob:2002-09-23": "rafael detoni mielke|dob:2002-09-23",
+    "tainan silvares fonseca|dob:1997-12-01": "tainan guilherme silvares fonseca|dob:1997-12-01",
+    "theo de oliveira valentin|dob:1992-09-26": "theo de oliveira valentim|dob:1992-09-26",
+    "varnom martins|dob:2004-04-27": "vernom martins|dob:2004-04-27",
+    "vicente|dob:2007-01-17": "vicente da costa almeida|dob:2007-01-17"
+  }
+}

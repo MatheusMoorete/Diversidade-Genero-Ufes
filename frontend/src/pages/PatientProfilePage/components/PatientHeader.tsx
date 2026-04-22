@@ -57,6 +57,12 @@ export const PatientHeader: React.FC<PatientHeaderProps> = ({ patient, latestFor
                                 💊 Em hormonização
                             </div>
                         )}
+                        <button
+                            onClick={() => navigate(`/form?patientId=${patient.id}`)}
+                            className="px-3 py-1.5 rounded-full text-sm font-medium bg-[#4A6FA5] text-white hover:bg-[#3b5984] transition-colors"
+                        >
+                            Novo retorno
+                        </button>
                     </div>
                 </div>
 

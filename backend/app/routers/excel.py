@@ -16,6 +16,8 @@ import tempfile
 
 from app import crud, models, schemas, auth, excel_service
 from app.database import get_db
+from app.config import RATE_LIMIT_EXCEL, EXCEL_MAX_UPLOAD_SIZE_BYTES
+from app.rate_limit import limiter
 
 logger = logging.getLogger(__name__)
 
@@ -24,6 +26,7 @@ router = APIRouter(prefix="/api", tags=["Excel"])
 
 
 @router.post("/export/excel")
+@limiter.limit(RATE_LIMIT_EXCEL)
 async def export_pacientes_excel(
     request: Request,
     db: Session = Depends(get_db),
@@ -105,11 +108,12 @@ async def export_pacientes_excel(
         logger.error(f"Erro ao exportar Excel: {str(e)}", exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Erro ao exportar arquivo Excel: {str(e)}"
+            detail="Erro interno ao exportar arquivo Excel"
         )
 
 
 @router.post("/import/excel")
+@limiter.limit(RATE_LIMIT_EXCEL)
 async def import_pacientes_excel(
     request: Request,
     file: UploadFile = File(...),
@@ -133,10 +137,23 @@ async def import_pacientes_excel(
                 detail="Arquivo deve ser do tipo .xlsx ou .xls"
             )
         
-        # Salva arquivo temporário
+        # Salva arquivo temporário em stream com limite de tamanho
         with tempfile.NamedTemporaryFile(delete=False, suffix='.xlsx') as tmp_file:
-            content = await file.read()
-            tmp_file.write(content)
+            total_bytes = 0
+            while True:
+                chunk = await file.read(1024 * 1024)
+                if not chunk:
+                    break
+                total_bytes += len(chunk)
+                if total_bytes > EXCEL_MAX_UPLOAD_SIZE_BYTES:
+                    raise HTTPException(
+                        status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
+                        detail=(
+                            f"Arquivo excede o limite de "
+                            f"{EXCEL_MAX_UPLOAD_SIZE_BYTES // (1024 * 1024)} MB"
+                        )
+                    )
+                tmp_file.write(chunk)
             temp_filepath = tmp_file.name
         
         # Valida estrutura do arquivo
@@ -230,9 +247,10 @@ async def import_pacientes_excel(
         logger.error(f"Erro ao importar Excel: {str(e)}", exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Erro ao importar arquivo Excel: {str(e)}"
+            detail="Erro interno ao importar arquivo Excel"
         )
     finally:
+        await file.close()
         # Remove arquivo temporário
         if temp_filepath and os.path.exists(temp_filepath):
             try:

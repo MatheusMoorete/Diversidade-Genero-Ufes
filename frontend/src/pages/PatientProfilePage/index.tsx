@@ -114,7 +114,7 @@ const PatientProfilePage: React.FC = () => {
         );
     }
 
-    const latestForm = formResponses && formResponses.length > 0 ? formResponses[0] : null;
+    const latestForm = formResponses && formResponses.length > 0 ? formResponses[formResponses.length - 1] : null;
     const latestFormData = latestForm?.form_data as Record<string, unknown> || {};
     const patientAge = getPatientAge(latestFormData);
 
@@ -175,7 +175,6 @@ const PatientProfilePage: React.FC = () => {
                                     key={formResponse.id}
                                     formResponse={formResponse}
                                     index={index}
-                                    totalForms={formResponses.length}
                                     viewMode={viewMode}
                                     fieldLabelsMap={fieldLabelsMap}
                                     questionsData={questionsData}

@@ -14,6 +14,8 @@ import logging
 
 from app import crud, models, schemas, auth
 from app.database import get_db
+from app.config import RATE_LIMIT_DELETE
+from app.rate_limit import limiter
 
 logger = logging.getLogger(__name__)
 
@@ -118,6 +120,7 @@ async def update_patient(
 
 
 @router.delete("/{patient_id}")
+@limiter.limit(RATE_LIMIT_DELETE)
 async def delete_patient(
     request: Request,
     patient_id: int,
@@ -138,5 +141,4 @@ async def delete_patient(
         )
     logger.info(f"Paciente removido: {patient_id} por usuário: {current_user.username}")
     return {"message": "Paciente removido com sucesso"}
-
 

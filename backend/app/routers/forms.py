@@ -12,11 +12,11 @@ from sqlalchemy.orm import Session
 from typing import List
 import logging
 import json
-from datetime import datetime, timedelta
 
 from app import crud, models, schemas, auth
 from app.database import get_db
-from app.config import FORM_QUESTIONS_FILE, FORM_QUESTIONS_ADDITIONAL_FILE
+from app.config import FORM_QUESTIONS_FILE, FORM_QUESTIONS_ADDITIONAL_FILE, RATE_LIMIT_DELETE
+from app.rate_limit import limiter
 
 logger = logging.getLogger(__name__)
 
@@ -108,37 +108,12 @@ async def get_upcoming_returns(
     SEGURANÇA: Retorna apenas retornos de pacientes que pertencem ao usuário logado.
     Requer autenticação.
     """
-    today = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
-    end_date = today + timedelta(days=days)
-    
-    # Busca todos os pacientes do usuário
-    user_patients = crud.get_patients(
-        db,
+    form_responses = crud.get_upcoming_returns(
+        db=db,
         user_id=current_user.id,
-        skip=0,
-        limit=10000,  # Limite alto para pegar todos
-        search=None
+        days=days,
     )
-    
-    if not user_patients:
-        return []
-    
-    patient_ids = [p.id for p in user_patients]
-    
-    # Busca todos os formulários dos pacientes do usuário que tenham next_return_date
-    # e estejam dentro do período
-    from sqlalchemy import and_, func
-    
-    form_responses = db.query(models.FormResponse).filter(
-        and_(
-            models.FormResponse.patient_id.in_(patient_ids),
-            models.FormResponse.created_by_user_id == current_user.id,
-            models.FormResponse.next_return_date.isnot(None),
-            models.FormResponse.next_return_date >= today,
-            models.FormResponse.next_return_date <= end_date
-        )
-    ).order_by(models.FormResponse.next_return_date.asc()).all()
-    
+
     logger.info(f"Retornados {len(form_responses)} retornos dos próximos {days} dias para usuário: {current_user.username}")
     return form_responses
 
@@ -199,6 +174,7 @@ async def update_form_response(
 
 
 @router.delete("/{form_response_id}")
+@limiter.limit(RATE_LIMIT_DELETE)
 async def delete_form_response(
     request: Request,
     form_response_id: int,

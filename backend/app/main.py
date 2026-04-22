@@ -6,15 +6,16 @@ Arquitetura organizada para fácil manutenção.
 
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
-from slowapi import Limiter, _rate_limit_exceeded_handler
-from slowapi.util import get_remote_address
+from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 from slowapi.middleware import SlowAPIMiddleware
+from slowapi.util import get_remote_address
 import logging
 from datetime import datetime
 
 from app.database import init_db
 from app.create_indexes import create_indexes
+from app.rate_limit import limiter
 from app.config import (
     LOG_FILE,
     LOG_LEVEL,
@@ -59,7 +60,6 @@ app = FastAPI(
 )
 
 # Configuração de Rate Limiting
-limiter = Limiter(key_func=get_remote_address)
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 app.add_middleware(SlowAPIMiddleware)

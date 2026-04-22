@@ -14,13 +14,15 @@ interface FullFormViewProps {
 export const FullFormView: React.FC<FullFormViewProps> = ({ data, questionsData, additionalQuestionsData }) => {
     if (!questionsData) return null;
 
+    const alwaysVisibleSectionIds = new Set(['lab_and_bioimpedance']);
+
     const renderSection = (section: any) => {
-        // Filtra perguntas que tenham resposta no form_data fornecido
         const answeredQuestions = section.questions.filter((q: any) =>
             data[q.id] !== undefined && data[q.id] !== null && data[q.id] !== ''
         );
 
-        if (answeredQuestions.length === 0) return null;
+        const shouldRenderAllQuestions = alwaysVisibleSectionIds.has(section.id);
+        if (answeredQuestions.length === 0 && !shouldRenderAllQuestions) return null;
 
         return (
             <div key={section.id} className="mb-8 last:mb-0">
@@ -31,7 +33,7 @@ export const FullFormView: React.FC<FullFormViewProps> = ({ data, questionsData,
                 <div className="space-y-4">
                     {section.questions.map((q: any) => {
                         const val = data[q.id];
-                        if (val === undefined || val === null || val === '') return null;
+                        if (!shouldRenderAllQuestions && (val === undefined || val === null || val === '')) return null;
                         return (
                             <div key={q.id} className="text-sm flex flex-col sm:flex-row sm:items-start border-l-2 border-gray-100 pl-4 py-1 hover:border-blue-200 transition-colors">
                                 <div className="sm:w-1/3 text-gray-500 font-medium mb-1 sm:mb-0">{q.label}:</div>

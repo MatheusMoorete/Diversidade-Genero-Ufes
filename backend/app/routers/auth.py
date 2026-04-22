@@ -11,7 +11,8 @@ import logging
 
 from app import crud, models, schemas, auth
 from app.database import get_db
-from app.config import RATE_LIMIT_LOGIN
+from app.config import RATE_LIMIT_LOGIN, RATE_LIMIT_REGISTER
+from app.rate_limit import limiter
 
 logger = logging.getLogger(__name__)
 
@@ -20,6 +21,7 @@ router = APIRouter(prefix="/api/auth", tags=["Autenticação"])
 
 
 @router.post("/register", response_model=schemas.UserResponse)
+@limiter.limit(RATE_LIMIT_REGISTER)
 async def register(
     request: Request,
     user_data: schemas.UserCreate,
@@ -56,11 +58,12 @@ async def register(
         db.rollback()
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Erro ao criar usuário: {str(e)}"
+            detail="Erro interno ao criar usuário"
         )
 
 
 @router.post("/login", response_model=schemas.Token)
+@limiter.limit(RATE_LIMIT_LOGIN)
 async def login(
     request: Request,
     form_data: OAuth2PasswordRequestForm = Depends(),

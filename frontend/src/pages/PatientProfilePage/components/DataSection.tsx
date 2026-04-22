@@ -7,13 +7,23 @@ interface DataSectionProps {
     data: Record<string, unknown>;
     fieldLabelsMap: Record<string, string>;
     fields: string[];
+    showEmptyFields?: boolean;
 }
 
 /**
  * Componente para exibir uma seção de dados organiza em grade (Visão de Resumo).
  */
-export const DataSection: React.FC<DataSectionProps> = ({ title, icon, data, fieldLabelsMap, fields }) => {
-    const relevantFields = fields.filter(field => data[field] !== undefined && data[field] !== null && data[field] !== '');
+export const DataSection: React.FC<DataSectionProps> = ({
+    title,
+    icon,
+    data,
+    fieldLabelsMap,
+    fields,
+    showEmptyFields = false,
+}) => {
+    const relevantFields = showEmptyFields
+        ? fields
+        : fields.filter(field => data[field] !== undefined && data[field] !== null && data[field] !== '');
 
     if (relevantFields.length === 0) return null;
 

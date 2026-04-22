@@ -7,7 +7,14 @@ from sqlalchemy.orm import Session
 from typing import List, Optional
 from app import models, schemas
 from app.auth import get_password_hash
-from datetime import datetime
+from app.return_schedule import calculate_next_return_date
+from datetime import datetime, timedelta
+
+
+def _normalize_datetime(value: datetime) -> datetime:
+    if value.tzinfo is not None:
+        return value.replace(tzinfo=None)
+    return value
 
 
 # CRUD para User
@@ -241,12 +248,23 @@ def create_form_response(
     Returns:
         Objeto FormResponse criado
     """
+    next_return_date = form_response.next_return_date
+    hormone_over_one_year_answer = None
+    if isinstance(form_response.form_data, dict):
+        hormone_over_one_year_answer = form_response.form_data.get("hormone_therapy_over_one_year")
+
+    if next_return_date is None and hormone_over_one_year_answer in {"Sim", "Não"}:
+        next_return_date = calculate_next_return_date(
+            response_date=form_response.response_date,
+            uses_hormone_over_1year=form_response.uses_hormone_over_1year,
+        )
+
     db_form_response = models.FormResponse(
         patient_id=form_response.patient_id,
         response_date=form_response.response_date,
         uses_hormone_over_1year=form_response.uses_hormone_over_1year,
         form_data=form_response.form_data,
-        next_return_date=form_response.next_return_date,
+        next_return_date=next_return_date,
         created_by_user_id=user_id
     )
     db.add(db_form_response)
@@ -323,7 +341,52 @@ def get_form_responses_by_patient(
         models.FormResponse.patient_id == patient_id,
         models.FormResponse.created_by_user_id == user_id,
         models.FormResponse.deleted_at.is_(None)  # Soft delete filter
+    ).order_by(
+        models.FormResponse.response_date.asc(),
+        models.FormResponse.id.asc()
     ).offset(skip).limit(limit).all()
+
+
+def get_upcoming_returns(
+    db: Session,
+    user_id: int,
+    days: int = 15
+) -> List[models.FormResponse]:
+    """
+    Retorna apenas o formulário mais recente de cada paciente com retorno
+    agendado dentro da janela solicitada.
+    """
+    today = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
+    end_date = today + timedelta(days=days)
+
+    responses = db.query(models.FormResponse).join(models.Patient).filter(
+        models.FormResponse.created_by_user_id == user_id,
+        models.FormResponse.deleted_at.is_(None),
+        models.Patient.created_by_user_id == user_id,
+        models.Patient.deleted_at.is_(None),
+    ).order_by(
+        models.FormResponse.patient_id.asc(),
+        models.FormResponse.response_date.desc(),
+        models.FormResponse.id.desc(),
+    ).all()
+
+    latest_by_patient: dict[int, models.FormResponse] = {}
+    for response in responses:
+        if response.patient_id not in latest_by_patient:
+            latest_by_patient[response.patient_id] = response
+
+    upcoming: list[models.FormResponse] = []
+    for response in latest_by_patient.values():
+        if response.next_return_date is None:
+            continue
+
+        next_return_date = _normalize_datetime(response.next_return_date)
+
+        if today <= next_return_date <= end_date:
+            upcoming.append(response)
+
+    upcoming.sort(key=lambda response: (_normalize_datetime(response.next_return_date), response.id))
+    return upcoming
 
 
 def update_form_response(
@@ -390,4 +453,3 @@ def delete_form_response(db: Session, form_response_id: int, user_id: int) -> bo
     db_form_response.deleted_at = datetime.now()
     db.commit()
     return True
-

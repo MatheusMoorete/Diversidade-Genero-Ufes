@@ -34,17 +34,15 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
         True se a senha corresponde, False caso contrário
     """
     try:
-        # Tenta usar bcrypt diretamente primeiro (compatível com hash criado pelo script)
         password_bytes = plain_password.encode('utf-8')
         if len(password_bytes) > 72:
-            password_bytes = password_bytes[:72]
+            return False
         hash_bytes = hashed_password.encode('utf-8')
         return bcrypt.checkpw(password_bytes, hash_bytes)
     except Exception:
-        # Se falhar, tenta com passlib (fallback)
         password_bytes = plain_password.encode('utf-8')
         if len(password_bytes) > 72:
-            plain_password = password_bytes[:72].decode('utf-8', errors='ignore')
+            return False
         return pwd_context.verify(plain_password, hashed_password)
 
 
@@ -58,11 +56,9 @@ def get_password_hash(password: str) -> str:
     Returns:
         Hash da senha
     """
-    # Bcrypt tem limite de 72 bytes, trunca se necessário
     password_bytes = password.encode('utf-8')
     if len(password_bytes) > 72:
-        password_bytes = password_bytes[:72]
-    # Usa bcrypt diretamente para evitar problemas com passlib
+        raise ValueError("Senha excede o limite de 72 bytes do bcrypt")
     salt = bcrypt.gensalt()
     hashed = bcrypt.hashpw(password_bytes, salt)
     return hashed.decode('utf-8')
@@ -156,4 +152,3 @@ def get_current_user(
         raise credentials_exception
     
     return user
-
