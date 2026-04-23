@@ -254,7 +254,9 @@ def _normalize_export_value(value: Any) -> Any:
     if _is_empty_value(value):
         return ""
     if isinstance(value, list):
-        return ", ".join(str(item) for item in value if not _is_empty_value(item))
+        value = ", ".join(str(item) for item in value if not _is_empty_value(item))
+    if isinstance(value, str) and value[:1] in {"=", "+", "-", "@"}:
+        return f"'{value}"
     if isinstance(value, bool):
         return "Sim" if value else "Não"
     return value

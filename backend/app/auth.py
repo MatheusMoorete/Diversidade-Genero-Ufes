@@ -7,19 +7,19 @@ from datetime import datetime, timedelta
 from typing import Optional
 from jose import JWTError, jwt
 from passlib.context import CryptContext
-from fastapi import Depends, HTTPException, status
+from fastapi import Depends, HTTPException, Request, status
 from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.orm import Session
 from app import models, schemas
 from app.database import get_db
-from app.config import SECRET_KEY, ALGORITHM, ACCESS_TOKEN_EXPIRE_MINUTES, JWT_ISSUER, JWT_AUDIENCE
+from app.config import SECRET_KEY, ALGORITHM, ACCESS_TOKEN_EXPIRE_MINUTES, JWT_ISSUER, JWT_AUDIENCE, AUTH_COOKIE_NAME
 import bcrypt
 
 # Contexto para hash de senhas
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 # OAuth2 scheme para autenticação
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="api/auth/login")
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="api/auth/login", auto_error=False)
 
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
@@ -111,7 +111,8 @@ def authenticate_user(db: Session, username: str, password: str) -> Optional[mod
 
 
 def get_current_user(
-    token: str = Depends(oauth2_scheme),
+    request: Request,
+    token: Optional[str] = Depends(oauth2_scheme),
     db: Session = Depends(get_db)
 ) -> models.User:
     """
@@ -133,12 +134,18 @@ def get_current_user(
         headers={"WWW-Authenticate": "Bearer"},
     )
     
+    if token is None:
+        token = request.cookies.get(AUTH_COOKIE_NAME)
+    if token is None:
+        raise credentials_exception
+
     try:
         payload = jwt.decode(
             token, 
             SECRET_KEY, 
             algorithms=[ALGORITHM],
-            audience=JWT_AUDIENCE  # Valida que o token foi emitido para esta API
+            audience=JWT_AUDIENCE,  # Valida que o token foi emitido para esta API
+            issuer=JWT_ISSUER,
         )
         username: str = payload.get("sub")
         if username is None:

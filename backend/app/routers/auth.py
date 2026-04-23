@@ -1,24 +1,30 @@
 """
-Router de autenticação.
-Gerencia login e registro de usuários.
+Router de autenticacao.
 """
 
-from fastapi import APIRouter, Depends, HTTPException, Request, status
+import logging
+from datetime import timedelta
+
+from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
-from datetime import timedelta
-import logging
 
-from app import crud, models, schemas, auth
+from app import auth, crud, models, schemas
+from app.config import (
+    ALLOW_PUBLIC_REGISTRATION,
+    AUTH_COOKIE_NAME,
+    AUTH_COOKIE_SAMESITE,
+    AUTH_COOKIE_SECURE,
+    RATE_LIMIT_LOGIN,
+    RATE_LIMIT_REGISTER,
+)
 from app.database import get_db
-from app.config import RATE_LIMIT_LOGIN, RATE_LIMIT_REGISTER
 from app.permissions import is_form_schema_admin
 from app.rate_limit import limiter
 
 logger = logging.getLogger(__name__)
 
-# Cria o router
-router = APIRouter(prefix="/api/auth", tags=["Autenticação"])
+router = APIRouter(prefix="/api/auth", tags=["Autenticacao"])
 
 
 @router.post("/register", response_model=schemas.UserResponse)
@@ -26,78 +32,92 @@ router = APIRouter(prefix="/api/auth", tags=["Autenticação"])
 async def register(
     request: Request,
     user_data: schemas.UserCreate,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
     """
-    Endpoint de registro. Cria um novo usuário no sistema.
-    
-    SEGURANÇA:
-    - Senha é hasheada com bcrypt antes de armazenar
-    - Senha nunca é logada ou retornada na resposta
-    - Apenas username é logado (sem senha)
+    Cria um novo usuario quando o cadastro publico estiver habilitado.
     """
-    # Verifica se o usuário já existe
+    if not ALLOW_PUBLIC_REGISTRATION:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Cadastro publico desabilitado. Solicite acesso a TI responsavel.",
+        )
+
     existing_user = crud.get_user_by_username(db, username=user_data.username)
     if existing_user:
-        # Log sem expor senha
-        logger.warning(f"Tentativa de registro com username já existente: {user_data.username}")
+        logger.warning("Tentativa de registro com username ja existente: %s", user_data.username)
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Nome de usuário já está em uso"
+            detail="Nome de usuario ja esta em uso",
         )
-    
-    # Cria o novo usuário (senha será hasheada no crud.create_user)
+
     try:
         new_user = crud.create_user(db=db, user=user_data)
-        # Log sem expor senha - apenas username
-        logger.info(f"Novo usuário registrado: {new_user.username}")
+        logger.info("Novo usuario registrado: %s", new_user.username)
         return new_user
-    except Exception as e:
-        # Log de erro sem expor senha
-        logger.error(f"Erro ao criar usuário: {str(e)}", exc_info=True)
-        # Rollback da transação em caso de erro
+    except Exception as exc:
+        logger.error("Erro ao criar usuario: %s", str(exc), exc_info=True)
         db.rollback()
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Erro interno ao criar usuário"
-        )
+            detail="Erro interno ao criar usuario",
+        ) from exc
 
 
 @router.post("/login", response_model=schemas.Token)
 @limiter.limit(RATE_LIMIT_LOGIN)
 async def login(
     request: Request,
+    response: Response,
     form_data: OAuth2PasswordRequestForm = Depends(),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
     """
-    Endpoint de login. Retorna token JWT para autenticação.
-    
-    SEGURANÇA:
-    - Senha é enviada via HTTPS (SSL/TLS) - configure certificado em produção
-    - Senha nunca é logada ou armazenada em texto plano
-    - Senha é comparada apenas com hash armazenado no banco
-    - Rate limiting aplicado para prevenir brute force
+    Realiza login e grava o token em cookie HttpOnly.
     """
-    # IMPORTANTE: form_data.password nunca é logado ou exposto
     user = auth.authenticate_user(db, form_data.username, form_data.password)
     if not user:
-        # Log sem expor senha ou detalhes sensíveis
-        logger.warning(f"Tentativa de login falhada para usuário: {form_data.username}")
+        logger.warning("Tentativa de login falhada para usuario: %s", form_data.username)
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Usuário ou senha incorretos",
+            detail="Usuario ou senha incorretos",
             headers={"WWW-Authenticate": "Bearer"},
         )
-    
+
     access_token_expires = timedelta(minutes=auth.ACCESS_TOKEN_EXPIRE_MINUTES)
     access_token = auth.create_access_token(
-        data={"sub": user.username}, expires_delta=access_token_expires
+        data={"sub": user.username},
+        expires_delta=access_token_expires,
     )
-    
-    # Log sem expor senha
-    logger.info(f"Login bem-sucedido para usuário: {user.username}")
+
+    response.set_cookie(
+        key=AUTH_COOKIE_NAME,
+        value=access_token,
+        httponly=True,
+        secure=AUTH_COOKIE_SECURE,
+        samesite=AUTH_COOKIE_SAMESITE,
+        max_age=int(access_token_expires.total_seconds()),
+        expires=int(access_token_expires.total_seconds()),
+        path="/",
+    )
+
+    logger.info("Login bem-sucedido para usuario: %s", user.username)
     return {"access_token": access_token, "token_type": "bearer"}
+
+
+@router.post("/logout")
+async def logout(response: Response):
+    """
+    Remove o cookie de autenticacao do navegador.
+    """
+    response.delete_cookie(
+        key=AUTH_COOKIE_NAME,
+        httponly=True,
+        secure=AUTH_COOKIE_SECURE,
+        samesite=AUTH_COOKIE_SAMESITE,
+        path="/",
+    )
+    return {"message": "Logout realizado com sucesso"}
 
 
 @router.get("/me", response_model=schemas.UserResponse)
@@ -105,7 +125,7 @@ async def read_current_user(
     current_user: models.User = Depends(auth.get_current_user),
 ):
     """
-    Retorna os dados do usuário autenticado e suas permissões administrativas.
+    Retorna dados do usuario autenticado e permissoes administrativas.
     """
     return schemas.UserResponse(
         id=current_user.id,

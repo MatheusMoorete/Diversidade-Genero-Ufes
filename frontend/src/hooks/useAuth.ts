@@ -1,114 +1,85 @@
 /**
- * Hook e store Zustand para gerenciamento de autenticação.
- * Armazena token JWT e informações do usuário logado.
+ * Store de autenticacao usando sessao em cookie HttpOnly.
  */
 
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import type { User, LoginRequest } from '@/types';
+
+import type { LoginRequest, User } from '@/types';
 import { authService } from '@/services/api';
 
 interface AuthState {
   user: User | null;
-  token: string | null;
   isAuthenticated: boolean;
   showLoginModal: boolean;
   login: (credentials: LoginRequest) => Promise<void>;
   refreshUser: () => Promise<void>;
-  logout: () => void;
+  logout: () => Promise<void>;
   setUser: (user: User) => void;
   openLoginModal: () => void;
   closeLoginModal: () => void;
 }
 
-/**
- * Store Zustand para autenticação com persistência no localStorage
- */
 export const useAuth = create<AuthState>()(
   persist(
     (set) => ({
       user: null,
-      token: null,
       isAuthenticated: false,
       showLoginModal: false,
 
-      /**
-       * Realiza login e armazena token
-       */
       login: async (credentials: LoginRequest) => {
-        try {
-          const response = await authService.login(credentials);
-          
-          // Armazena token no localStorage
-          localStorage.setItem('access_token', response.access_token);
-          const user = await authService.getCurrentUser();
+        await authService.login(credentials);
+        const user = await authService.getCurrentUser();
 
+        set({
+          user,
+          isAuthenticated: true,
+          showLoginModal: false,
+        });
+      },
+
+      refreshUser: async () => {
+        try {
+          const user = await authService.getCurrentUser();
           set({
             user,
-            token: response.access_token,
             isAuthenticated: true,
-            showLoginModal: false, // Fecha o modal após login bem-sucedido
           });
         } catch (error) {
+          set({
+            user: null,
+            isAuthenticated: false,
+          });
           throw error;
         }
       },
 
-      refreshUser: async () => {
-        const token = localStorage.getItem('access_token');
-        if (!token) {
-          set({
-            user: null,
-            token: null,
-            isAuthenticated: false,
-          });
-          return;
+      logout: async () => {
+        try {
+          await authService.logout();
+        } catch {
+          // A sessao local deve ser limpa mesmo se o backend ja tiver expirado o cookie.
         }
 
-        const user = await authService.getCurrentUser();
-        set({
-          user,
-          token,
-          isAuthenticated: true,
-        });
-      },
-
-      /**
-       * Realiza logout e limpa dados
-       */
-      logout: () => {
-        localStorage.removeItem('access_token');
         set({
           user: null,
-          token: null,
           isAuthenticated: false,
           showLoginModal: false,
         });
       },
 
-      /**
-       * Define informações do usuário
-       */
       setUser: (user: User) => {
         set({ user });
       },
 
-      /**
-       * Abre o modal de login
-       * Também limpa o estado de autenticação quando chamado por erro 401
-       */
       openLoginModal: () => {
         set({
           showLoginModal: true,
           user: null,
-          token: null,
           isAuthenticated: false,
         });
       },
 
-      /**
-       * Fecha o modal de login
-       */
       closeLoginModal: () => {
         set({ showLoginModal: false });
       },
@@ -117,9 +88,7 @@ export const useAuth = create<AuthState>()(
       name: 'auth-storage',
       partialize: (state) => ({
         user: state.user,
-        token: state.token,
         isAuthenticated: state.isAuthenticated,
-        // Não persiste showLoginModal no localStorage
       }),
     }
   )

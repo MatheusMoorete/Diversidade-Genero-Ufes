@@ -13,6 +13,13 @@ def _get_int_env(name: str, default: int) -> int:
         return default
     return int(raw_value)
 
+
+def _get_bool_env(name: str, default: bool) -> bool:
+    raw_value = os.getenv(name, "").strip().lower()
+    if not raw_value:
+        return default
+    return raw_value in {"1", "true", "yes", "on"}
+
 # Diretório base do projeto
 BASE_DIR = Path(__file__).parent.parent
 
@@ -43,6 +50,10 @@ ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
 JWT_ISSUER = "diversidade-genero-ufes"
 JWT_AUDIENCE = "diversidade-genero-ufes-api"
+AUTH_COOKIE_NAME = os.getenv("AUTH_COOKIE_NAME", "access_token").strip() or "access_token"
+AUTH_COOKIE_SECURE = _get_bool_env("AUTH_COOKIE_SECURE", False)
+AUTH_COOKIE_SAMESITE = os.getenv("AUTH_COOKIE_SAMESITE", "lax").strip().lower() or "lax"
+ALLOW_PUBLIC_REGISTRATION = _get_bool_env("ALLOW_PUBLIC_REGISTRATION", False)
 
 # Configurações de CORS
 # IMPORTANTE: Em produção, especificar domínios permitidos
