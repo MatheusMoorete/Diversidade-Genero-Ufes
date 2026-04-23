@@ -20,6 +20,15 @@ def _get_bool_env(name: str, default: bool) -> bool:
         return default
     return raw_value in {"1", "true", "yes", "on"}
 
+
+def _get_cookie_samesite_env(name: str, default: str) -> str:
+    raw_value = os.getenv(name, "").strip().lower()
+    if not raw_value:
+        return default
+    if raw_value in {"lax", "strict", "none"}:
+        return raw_value
+    return default
+
 # Diretório base do projeto
 BASE_DIR = Path(__file__).parent.parent
 
@@ -52,7 +61,7 @@ JWT_ISSUER = "diversidade-genero-ufes"
 JWT_AUDIENCE = "diversidade-genero-ufes-api"
 AUTH_COOKIE_NAME = os.getenv("AUTH_COOKIE_NAME", "access_token").strip() or "access_token"
 AUTH_COOKIE_SECURE = _get_bool_env("AUTH_COOKIE_SECURE", False)
-AUTH_COOKIE_SAMESITE = os.getenv("AUTH_COOKIE_SAMESITE", "lax").strip().lower() or "lax"
+AUTH_COOKIE_SAMESITE = _get_cookie_samesite_env("AUTH_COOKIE_SAMESITE", "lax")
 ALLOW_PUBLIC_REGISTRATION = _get_bool_env("ALLOW_PUBLIC_REGISTRATION", False)
 
 # Configurações de CORS

@@ -4,6 +4,7 @@ Router de autenticacao.
 
 import logging
 from datetime import timedelta
+from urllib.parse import urlparse
 
 from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
 from fastapi.security import OAuth2PasswordRequestForm
@@ -25,6 +26,42 @@ from app.rate_limit import limiter
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/auth", tags=["Autenticacao"])
+
+LOCALHOST_HOSTNAMES = {"localhost", "127.0.0.1"}
+
+
+def _is_https_request(request: Request) -> bool:
+    forwarded_proto = request.headers.get("x-forwarded-proto", "").split(",")[0].strip().lower()
+    if forwarded_proto:
+        return forwarded_proto == "https"
+    return request.url.scheme == "https"
+
+
+def _is_remote_origin(origin: str | None) -> bool:
+    if not origin:
+        return False
+
+    hostname = urlparse(origin).hostname
+    if not hostname:
+        return False
+
+    return hostname not in LOCALHOST_HOSTNAMES
+
+
+def _resolve_cookie_settings(request: Request) -> tuple[bool, str]:
+    secure = AUTH_COOKIE_SECURE
+    samesite = AUTH_COOKIE_SAMESITE
+
+    # Frontend e backend em origens diferentes exigem SameSite=None; Secure
+    # para que o navegador envie o cookie nas chamadas XHR/fetch autenticadas.
+    if _is_remote_origin(request.headers.get("origin")) and _is_https_request(request):
+        secure = True
+        samesite = "none"
+
+    if samesite == "none":
+        secure = True
+
+    return secure, samesite
 
 
 @router.post("/register", response_model=schemas.UserResponse)
@@ -90,12 +127,14 @@ async def login(
         expires_delta=access_token_expires,
     )
 
+    cookie_secure, cookie_samesite = _resolve_cookie_settings(request)
+
     response.set_cookie(
         key=AUTH_COOKIE_NAME,
         value=access_token,
         httponly=True,
-        secure=AUTH_COOKIE_SECURE,
-        samesite=AUTH_COOKIE_SAMESITE,
+        secure=cookie_secure,
+        samesite=cookie_samesite,
         max_age=int(access_token_expires.total_seconds()),
         expires=int(access_token_expires.total_seconds()),
         path="/",
@@ -106,15 +145,17 @@ async def login(
 
 
 @router.post("/logout")
-async def logout(response: Response):
+async def logout(request: Request, response: Response):
     """
     Remove o cookie de autenticacao do navegador.
     """
+    cookie_secure, cookie_samesite = _resolve_cookie_settings(request)
+
     response.delete_cookie(
         key=AUTH_COOKIE_NAME,
         httponly=True,
-        secure=AUTH_COOKIE_SECURE,
-        samesite=AUTH_COOKIE_SAMESITE,
+        secure=cookie_secure,
+        samesite=cookie_samesite,
         path="/",
     )
     return {"message": "Logout realizado com sucesso"}
