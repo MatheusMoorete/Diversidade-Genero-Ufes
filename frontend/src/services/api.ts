@@ -202,12 +202,16 @@ export const backupService = {
 
 export const formQuestionsService = {
   async getFormQuestions(): Promise<FormQuestionsData> {
-    const response = await api.get<FormQuestionsData>('/api/form-questions');
+    const response = await api.get<FormQuestionsData>('/api/form-questions', {
+      params: { _: Date.now() },
+    });
     return response.data;
   },
 
   async getAdditionalFormQuestions(): Promise<FormQuestionsData> {
-    const response = await api.get<FormQuestionsData>('/api/form-questions/additional');
+    const response = await api.get<FormQuestionsData>('/api/form-questions/additional', {
+      params: { _: Date.now() },
+    });
     return response.data;
   },
 

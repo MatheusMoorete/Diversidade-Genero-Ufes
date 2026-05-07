@@ -127,6 +127,7 @@ const PatientProfilePage: React.FC = () => {
                     latestFormData={latestFormData}
                     patientAge={patientAge}
                     formCount={formResponses?.length || 0}
+                    nextReturnDate={latestForm?.next_return_date}
                 />
 
                 <div className="mb-8">

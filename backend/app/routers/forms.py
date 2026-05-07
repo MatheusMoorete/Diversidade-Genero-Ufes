@@ -224,7 +224,7 @@ async def get_form_questions(
     Requer autenticação.
     
     Headers de cache configurados para otimizar performance:
-    - Cache-Control: permite cache do cliente por 1 hora
+    - Cache-Control: evita reutilizar perguntas dinâmicas antigas
     - ETag: baseado na versão do formulário para validação condicional
     """
     try:
@@ -248,7 +248,7 @@ async def get_form_questions(
             content=json.dumps(questions_data, ensure_ascii=False),
             media_type="application/json",
             headers={
-                "Cache-Control": "public, max-age=3600, stale-while-revalidate=86400",
+                "Cache-Control": "private, no-store, max-age=0",
                 "ETag": etag,
                 "Last-Modified": last_updated if last_updated else "",
             }
@@ -298,7 +298,7 @@ async def get_additional_form_questions(
             content=json.dumps(questions_data, ensure_ascii=False),
             media_type="application/json",
             headers={
-                "Cache-Control": "public, max-age=3600, stale-while-revalidate=86400",
+                "Cache-Control": "private, no-store, max-age=0",
                 "ETag": etag,
                 "Last-Modified": last_updated if last_updated else "",
             }

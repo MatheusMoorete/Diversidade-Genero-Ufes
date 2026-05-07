@@ -1,6 +1,6 @@
 /**
  * Pagina de Retornos Agendados.
- * Mostra os proximos retornos por janela de 30, 90 ou 180 dias.
+ * Mostra os proximos retornos por janela de 4, 12 ou 24 semanas.
  */
 
 import React, { useMemo } from 'react';
@@ -8,9 +8,17 @@ import { useQuery } from '@tanstack/react-query';
 import { queryKeys } from '@/config/queryKeys';
 import { useNavigate } from 'react-router-dom';
 import { patientService, formService } from '@/services/api';
-import { format, parseISO, startOfDay, differenceInDays } from 'date-fns';
+import { differenceInCalendarWeeks, format, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import type { FormResponse, Patient } from '@/types';
+import {
+  formatReturnWeekRange,
+  getRelativeReturnWeekLabel,
+  getReturnWindowDaysFromWeeks,
+  getReturnWeekKey,
+  getReturnWeekStart,
+  parseReturnDate,
+} from '@/utils/returnWeeks';
 
 interface ReturnWithPatient extends FormResponse {
   patient?: Patient;
@@ -18,13 +26,15 @@ interface ReturnWithPatient extends FormResponse {
 
 export const ReturnPage: React.FC = () => {
   const navigate = useNavigate();
-  const [filterDays, setFilterDays] = React.useState<30 | 90 | 180>(180);
+  const [filterWeeks, setFilterWeeks] = React.useState<4 | 12 | 24>(24);
   const [currentPage, setCurrentPage] = React.useState(1);
   const itemsPerPage = 5;
 
   React.useEffect(() => {
     setCurrentPage(1);
-  }, [filterDays]);
+  }, [filterWeeks]);
+
+  const returnWindowDays = useMemo(() => getReturnWindowDaysFromWeeks(filterWeeks), [filterWeeks]);
 
   const { data: patients = [], isLoading: isLoadingPatients } = useQuery({
     queryKey: queryKeys.patients.list({}),
@@ -34,8 +44,8 @@ export const ReturnPage: React.FC = () => {
   });
 
   const { data: allFormResponses = [], isLoading: isLoadingReturns } = useQuery({
-    queryKey: queryKeys.formResponses.upcomingReturns(filterDays),
-    queryFn: () => formService.getUpcomingReturns(filterDays),
+    queryKey: queryKeys.formResponses.upcomingReturns(returnWindowDays),
+    queryFn: () => formService.getUpcomingReturns(returnWindowDays),
     staleTime: 1000 * 60,
     gcTime: 1000 * 60 * 3,
   });
@@ -48,50 +58,47 @@ export const ReturnPage: React.FC = () => {
       })
       .sort((a, b) => {
         if (!a.next_return_date || !b.next_return_date) return 0;
-        const dateA = startOfDay(parseISO(a.next_return_date));
-        const dateB = startOfDay(parseISO(b.next_return_date));
+        const dateA = parseReturnDate(a.next_return_date);
+        const dateB = parseReturnDate(b.next_return_date);
         return dateA.getTime() - dateB.getTime();
       });
 
     return returnsWithPatient;
   }, [allFormResponses, patients]);
 
-  const today = startOfDay(new Date());
+  const currentWeek = getReturnWeekStart(new Date());
   const isLoading = isLoadingPatients || isLoadingReturns;
 
-  const returnsByDate = useMemo(() => {
+  const returnsByWeek = useMemo(() => {
     const grouped: Record<string, ReturnWithPatient[]> = {};
 
     upcomingReturns.forEach((returnItem) => {
       if (!returnItem.next_return_date) return;
-      const returnDate = startOfDay(parseISO(returnItem.next_return_date));
-      const dateKey = format(returnDate, 'yyyy-MM-dd');
+      const weekKey = getReturnWeekKey(returnItem.next_return_date);
 
-      if (!grouped[dateKey]) {
-        grouped[dateKey] = [];
+      if (!grouped[weekKey]) {
+        grouped[weekKey] = [];
       }
-      grouped[dateKey].push(returnItem);
+      grouped[weekKey].push(returnItem);
     });
 
     return grouped;
   }, [upcomingReturns]);
 
-  const sortedDates = useMemo(() => {
-    return Object.keys(returnsByDate).sort();
-  }, [returnsByDate]);
+  const sortedWeeks = useMemo(() => {
+    return Object.keys(returnsByWeek).sort();
+  }, [returnsByWeek]);
 
-  const totalItems = sortedDates.length;
+  const totalItems = sortedWeeks.length;
   const totalPages = Math.ceil(totalItems / itemsPerPage);
 
-  const currentDates = useMemo(() => {
+  const currentWeeks = useMemo(() => {
     const start = (currentPage - 1) * itemsPerPage;
-    return sortedDates.slice(start, start + itemsPerPage);
-  }, [sortedDates, currentPage]);
+    return sortedWeeks.slice(start, start + itemsPerPage);
+  }, [sortedWeeks, currentPage]);
 
-  const formatFilterLabel = (days: number) => {
-    if (days === 180) return '6 meses';
-    if (days === 90) return '3 meses';
-    return `${days} dias`;
+  const formatFilterLabel = (weeks: number) => {
+    return `${weeks} semanas`;
   };
 
   return (
@@ -105,22 +112,22 @@ export const ReturnPage: React.FC = () => {
                 <span className="md:hidden">Retornos</span>
               </h1>
               <p className="text-gray-500 text-lg">
-                Proximos retornos dos proximos {formatFilterLabel(filterDays)}
+                Proximos retornos das proximas {formatFilterLabel(filterWeeks)}
               </p>
             </div>
 
             <div className="flex bg-gray-200/50 p-1 rounded-xl shadow-inner-sm w-full md:w-auto">
-              {[30, 90, 180].map((days) => (
+              {[4, 12, 24].map((weeks) => (
                 <button
-                  key={days}
-                  onClick={() => setFilterDays(days as 30 | 90 | 180)}
+                  key={weeks}
+                  onClick={() => setFilterWeeks(weeks as 4 | 12 | 24)}
                   className={`flex-1 md:flex-initial px-4 py-2 rounded-lg text-sm font-bold transition-all duration-300 ${
-                    filterDays === days
+                    filterWeeks === weeks
                       ? 'bg-white text-[#4A6FA5] shadow-md transform scale-[1.02]'
                       : 'text-gray-500 hover:text-gray-700'
                   }`}
                 >
-                  {days === 180 ? '6 Meses' : days === 90 ? '3 Meses' : `${days} Dias`}
+                  {weeks} Semanas
                 </button>
               ))}
             </div>
@@ -133,7 +140,7 @@ export const ReturnPage: React.FC = () => {
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#4A6FA5] mx-auto mb-4"></div>
               <p className="text-gray-500">Carregando retornos...</p>
             </div>
-          ) : sortedDates.length === 0 ? (
+          ) : sortedWeeks.length === 0 ? (
             <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-12 text-center">
               <div className="mb-4">
                 <svg className="w-16 h-16 text-gray-400 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -141,41 +148,38 @@ export const ReturnPage: React.FC = () => {
                 </svg>
               </div>
               <p className="text-gray-500 text-lg">
-                Nenhum retorno agendado para os proximos {formatFilterLabel(filterDays)}
+                Nenhum retorno agendado para as proximas {formatFilterLabel(filterWeeks)}
               </p>
             </div>
           ) : (
             <>
-              {currentDates.map((dateKey) => {
-                const returns = returnsByDate[dateKey];
-                const returnDate = startOfDay(parseISO(dateKey));
-                const daysFromToday = differenceInDays(returnDate, today);
-                const isTodayReturn = daysFromToday === 0;
-                const isTomorrow = daysFromToday === 1;
+              {currentWeeks.map((weekKey) => {
+                const returns = returnsByWeek[weekKey];
+                const weekStart = getReturnWeekStart(weekKey);
+                const weeksFromCurrent = differenceInCalendarWeeks(weekStart, currentWeek, {
+                  weekStartsOn: 1,
+                });
+                const isCurrentWeek = weeksFromCurrent === 0;
+                const isNextWeek = weeksFromCurrent === 1;
 
                 return (
-                  <div key={dateKey} className="space-y-4">
+                  <div key={weekKey} className="space-y-4">
                     <div className="flex items-center space-x-3">
                       <div className="flex-1 border-t border-gray-200"></div>
                       <div className="flex items-center space-x-2">
                         <span className="text-lg font-semibold text-gray-900 capitalize">
-                          {isTodayReturn
-                            ? 'Hoje'
-                            : isTomorrow
-                              ? 'Amanha'
-                              : (
-                                <>
-                                  <span className="md:hidden">{format(returnDate, 'EEEE', { locale: ptBR })}</span>
-                                  <span className="hidden md:inline">{format(returnDate, "EEEE, dd 'de' MMMM", { locale: ptBR })}</span>
-                                </>
-                              )}
+                          {isCurrentWeek
+                            ? 'Nesta semana'
+                            : isNextWeek
+                              ? 'Proxima semana'
+                              : `Semana de ${format(weekStart, 'dd/MM/yyyy', { locale: ptBR })}`}
                         </span>
                         <span className="text-sm text-gray-500">
-                          ({format(returnDate, 'dd/MM/yyyy', { locale: ptBR })})
+                          ({formatReturnWeekRange(weekKey)})
                         </span>
-                        {isTodayReturn && (
+                        {isCurrentWeek && (
                           <span className="px-2 py-1 bg-[#4A6FA5] text-white text-xs font-medium rounded-full">
-                            Hoje
+                            Esta semana
                           </span>
                         )}
                       </div>
@@ -184,7 +188,9 @@ export const ReturnPage: React.FC = () => {
 
                     <div className="space-y-3">
                       {returns.map((returnItem) => {
-                        const daysUntilReturn = differenceInDays(returnDate, today);
+                        const relativeWeekLabel = returnItem.next_return_date
+                          ? getRelativeReturnWeekLabel(returnItem.next_return_date)
+                          : '';
 
                         return (
                           <div
@@ -193,9 +199,9 @@ export const ReturnPage: React.FC = () => {
                               bg-white rounded-xl shadow-sm border-2 p-6
                               hover:shadow-md transition-all cursor-pointer
                               ${
-                                isTodayReturn
+                                isCurrentWeek
                                   ? 'border-[#4A6FA5] bg-gradient-to-r from-[#4A6FA5]/5 to-transparent'
-                                  : daysUntilReturn > 0 && daysUntilReturn <= 3
+                                  : isNextWeek
                                     ? 'border-yellow-300 bg-yellow-50/30'
                                     : 'border-gray-200'
                               }
@@ -220,21 +226,21 @@ export const ReturnPage: React.FC = () => {
                                     </span>
                                   )}
                                 </div>
-                                {daysUntilReturn > 0 && (
+                                {relativeWeekLabel && (
                                   <p className="text-sm text-gray-500">
-                                    Em {daysUntilReturn} {daysUntilReturn === 1 ? 'dia' : 'dias'}
+                                    {relativeWeekLabel}
                                   </p>
                                 )}
                               </div>
                               <div className="flex items-center space-x-2">
-                                {isTodayReturn && (
+                                {isCurrentWeek && (
                                   <span className="px-3 py-1 bg-[#4A6FA5] text-white text-sm font-medium rounded-lg">
-                                    Hoje
+                                    Esta semana
                                   </span>
                                 )}
-                                {daysUntilReturn <= 3 && daysUntilReturn > 0 && (
+                                {isNextWeek && (
                                   <span className="px-3 py-1 bg-yellow-400 text-yellow-900 text-sm font-medium rounded-lg">
-                                    Em breve
+                                    Proxima semana
                                   </span>
                                 )}
                                 <svg

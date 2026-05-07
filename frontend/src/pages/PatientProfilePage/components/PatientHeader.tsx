@@ -3,18 +3,20 @@ import { useNavigate } from 'react-router-dom';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import type { Patient } from '@/types';
+import { formatReturnWeekRange, getRelativeReturnWeekLabel } from '@/utils/returnWeeks';
 
 interface PatientHeaderProps {
     patient: Patient;
     latestFormData: Record<string, unknown>;
     patientAge: number | null;
     formCount: number;
+    nextReturnDate?: string | null;
 }
 
 /**
  * Cabeçalho do perfil do paciente com nome e estatísticas rápidas.
  */
-export const PatientHeader: React.FC<PatientHeaderProps> = ({ patient, latestFormData, patientAge, formCount }) => {
+export const PatientHeader: React.FC<PatientHeaderProps> = ({ patient, latestFormData, patientAge, formCount, nextReturnDate }) => {
     const navigate = useNavigate();
 
     return (
@@ -57,6 +59,11 @@ export const PatientHeader: React.FC<PatientHeaderProps> = ({ patient, latestFor
                                 💊 Em hormonização
                             </div>
                         )}
+                        {nextReturnDate && (
+                            <div className="bg-emerald-50 text-emerald-700 px-3 py-1.5 rounded-full text-sm font-medium">
+                                Retorno: {getRelativeReturnWeekLabel(nextReturnDate)}
+                            </div>
+                        )}
                         <button
                             onClick={() => navigate(`/form?patientId=${patient.id}`)}
                             className="px-3 py-1.5 rounded-full text-sm font-medium bg-[#4A6FA5] text-white hover:bg-[#3b5984] transition-colors"
@@ -74,6 +81,12 @@ export const PatientHeader: React.FC<PatientHeaderProps> = ({ patient, latestFor
                     <p>
                         📋 {formCount} atendimento{formCount !== 1 ? 's' : ''} registrado{formCount !== 1 ? 's' : ''}
                     </p>
+                    {nextReturnDate && (
+                        <p>
+                            Retorno previsto na semana de{' '}
+                            <span className="text-gray-700">{formatReturnWeekRange(nextReturnDate)}</span>
+                        </p>
+                    )}
                 </div>
             </div>
         </div>

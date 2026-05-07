@@ -19,8 +19,8 @@ def _normalize_datetime(value: datetime) -> datetime:
 
 def _end_of_return_visibility_window(value: datetime) -> datetime:
     weekday = value.weekday()
-    days_until_thursday = max(0, 3 - weekday)
-    return value + timedelta(days=days_until_thursday)
+    days_until_sunday = max(0, 6 - weekday)
+    return value + timedelta(days=days_until_sunday)
 
 
 # CRUD para User

@@ -333,14 +333,18 @@ export const FormSchemaPage: React.FC = () => {
     }));
   };
 
-  const invalidateQuestions = async () => {
+  const questionQueryKeyFor = (formKind: ManagedFormKind) =>
+    formKind === 'standard' ? queryKeys.formQuestions.standard : queryKeys.formQuestions.additional;
+
+  const syncQuestionsCache = async (formKind: ManagedFormKind, updatedDefinition: FormQuestionsData) => {
+    queryClient.setQueryData(questionQueryKeyFor(formKind), updatedDefinition);
     await queryClient.invalidateQueries({ queryKey: queryKeys.formQuestions.all });
   };
 
   const addQuestionMutation = useMutation({
     mutationFn: async (payload: FormQuestionCreatePayload) => formQuestionsService.addQuestion(activeFormKind, payload),
-    onSuccess: async () => {
-      await invalidateQuestions();
+    onSuccess: async (updatedDefinition) => {
+      await syncQuestionsCache(activeFormKind, updatedDefinition);
       resetForm();
       showToast('Pergunta adicionada com sucesso.', 'success');
     },
@@ -352,8 +356,8 @@ export const FormSchemaPage: React.FC = () => {
   const updateQuestionMutation = useMutation({
     mutationFn: async ({ questionId, payload }: { questionId: string; payload: FormQuestionCreatePayload }) =>
       formQuestionsService.updateQuestion(activeFormKind, questionId, payload),
-    onSuccess: async () => {
-      await invalidateQuestions();
+    onSuccess: async (updatedDefinition) => {
+      await syncQuestionsCache(activeFormKind, updatedDefinition);
       setEditingQuestion(null);
       resetForm();
       showToast('Pergunta atualizada com sucesso.', 'success');
@@ -366,8 +370,8 @@ export const FormSchemaPage: React.FC = () => {
   const removeQuestionMutation = useMutation({
     mutationFn: async ({ formKind, questionId }: { formKind: ManagedFormKind; questionId: string }) =>
       formQuestionsService.removeQuestion(formKind, questionId),
-    onSuccess: async () => {
-      await invalidateQuestions();
+    onSuccess: async (updatedDefinition, variables) => {
+      await syncQuestionsCache(variables.formKind, updatedDefinition);
       showToast('Pergunta removida com sucesso.', 'success');
     },
     onError: (error: any) => {
