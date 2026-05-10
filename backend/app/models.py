@@ -8,7 +8,7 @@ SEGURANÇA:
 - Não armazenamos CPF ou outros documentos de identificação
 """
 
-from sqlalchemy import Column, Integer, String, Boolean, DateTime, ForeignKey, JSON
+from sqlalchemy import Column, Integer, String, Boolean, DateTime, ForeignKey, JSON, UniqueConstraint
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from app.database import Base
@@ -28,6 +28,7 @@ class User(Base):
     # Relacionamentos
     form_responses = relationship("FormResponse", back_populates="created_by")
     patients = relationship("Patient", back_populates="created_by")
+    form_drafts = relationship("FormDraft", back_populates="created_by", cascade="all, delete-orphan")
 
 
 class Patient(Base):
@@ -80,3 +81,28 @@ class FormResponse(Base):
     patient = relationship("Patient", back_populates="form_responses")
     created_by = relationship("User", back_populates="form_responses")
 
+
+class FormDraft(Base):
+    """
+    Rascunho de consulta em andamento.
+
+    Usado como segunda camada de protecao contra expiracao de sessao, reload da
+    pagina ou backend dormindo. O frontend tambem mantem uma copia local.
+    """
+    __tablename__ = "form_drafts"
+    __table_args__ = (
+        UniqueConstraint("created_by_user_id", "draft_key", name="uq_form_drafts_user_key"),
+    )
+
+    id = Column(Integer, primary_key=True, index=True)
+    draft_key = Column(String(100), nullable=False, default="consultation")
+    is_creating_new_patient = Column(Boolean, default=False, nullable=False)
+    selected_patient = Column(JSON, nullable=True)
+    form_data = Column(JSON, nullable=True)
+    next_return_date = Column(String(40), nullable=True)
+    questions_version = Column(String(80), nullable=True)
+    created_by_user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+
+    created_by = relationship("User", back_populates="form_drafts")

@@ -1,11 +1,12 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { useBeforeUnload, useNavigate } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { Button } from '@/components/shared/Button';
 import { queryKeys } from '@/config/queryKeys';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/useToast';
-import { formQuestionsService } from '@/services/api';
+import { formQuestionsService, getApiErrorMessage } from '@/services/api';
 import type { FormQuestion, FormQuestionCreatePayload, FormQuestionsData, ManagedFormKind } from '@/types';
 
 const OPTION_BASED_TYPES = new Set<FormQuestion['type']>(['select', 'multiselect', 'radio', 'checkbox']);
@@ -139,6 +140,19 @@ const getDefinitionTitle = (formKind: ManagedFormKind, data?: FormQuestionsData)
   return formKind === 'standard' ? 'Formulário principal' : 'Formulário adicional';
 };
 
+const createEmptyFormState = (sectionId = ''): QuestionFormState => ({
+  ...EMPTY_FORM,
+  section_id: sectionId,
+});
+
+const cloneDefinition = (definition: FormQuestionsData): FormQuestionsData => ({
+  ...definition,
+  sections: definition.sections.map((section) => ({
+    ...section,
+    questions: [...section.questions],
+  })),
+});
+
 const renderQuestionPreview = (question: FormQuestion) => {
   const options = question.options ?? [];
 
@@ -259,14 +273,23 @@ const renderQuestionPreview = (question: FormQuestion) => {
 };
 
 export const FormSchemaPage: React.FC = () => {
+  const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { showToast } = useToast();
   const { user } = useAuth();
   const [activeFormKind, setActiveFormKind] = useState<ManagedFormKind>('standard');
   const [formState, setFormState] = useState<QuestionFormState>(EMPTY_FORM);
+  const [formBaseline, setFormBaseline] = useState<QuestionFormState>(EMPTY_FORM);
   const [editingQuestion, setEditingQuestion] = useState<EditingQuestionState | null>(null);
   const [questionPreview, setQuestionPreview] = useState<QuestionPreviewState | null>(null);
   const [isFullPreviewOpen, setIsFullPreviewOpen] = useState(false);
+  const [draftDefinitions, setDraftDefinitions] = useState<Partial<Record<ManagedFormKind, FormQuestionsData>>>({});
+  const [dirtyOrderForms, setDirtyOrderForms] = useState<Record<ManagedFormKind, boolean>>({
+    standard: false,
+    additional: false,
+  });
+  const [draggedQuestion, setDraggedQuestion] = useState<{ sectionId: string; questionId: string } | null>(null);
+  const [dragOverTarget, setDragOverTarget] = useState<{ questionId: string; placement: 'before' | 'after' } | null>(null);
 
   const { data: standardQuestionsData, isLoading: isLoadingStandard } = useQuery<FormQuestionsData>({
     queryKey: queryKeys.formQuestions.standard,
@@ -278,8 +301,10 @@ export const FormSchemaPage: React.FC = () => {
     queryFn: () => formQuestionsService.getAdditionalFormQuestions(),
   });
 
-  const activeDefinition = activeFormKind === 'standard' ? standardQuestionsData : additionalQuestionsData;
+  const serverActiveDefinition = activeFormKind === 'standard' ? standardQuestionsData : additionalQuestionsData;
+  const activeDefinition = draftDefinitions[activeFormKind] ?? serverActiveDefinition;
   const isLoading = isLoadingStandard || isLoadingAdditional;
+  const activeServerFirstSectionId = serverActiveDefinition?.sections[0]?.id ?? '';
 
   const allQuestions = useMemo(
     () => [standardQuestionsData, additionalQuestionsData]
@@ -298,6 +323,75 @@ export const FormSchemaPage: React.FC = () => {
     .split('\n')
     .map((option) => option.trim())
     .filter(Boolean);
+  const isQuestionDraftDirty = useMemo(
+    () => JSON.stringify(formState) !== JSON.stringify(formBaseline),
+    [formBaseline, formState]
+  );
+  const hasActiveOrderChanges = dirtyOrderForms[activeFormKind];
+  const hasUnsavedChanges = isQuestionDraftDirty || dirtyOrderForms.standard || dirtyOrderForms.additional;
+  const unsavedChangesMessage = 'Você tem alterações não salvas. Se sair agora, elas serão perdidas.';
+
+  useBeforeUnload(
+    useCallback((event) => {
+      if (!hasUnsavedChanges) return;
+      event.preventDefault();
+      event.returnValue = '';
+    }, [hasUnsavedChanges])
+  );
+
+  useEffect(() => {
+    if (!hasUnsavedChanges) return;
+
+    const handleDocumentClick = (event: MouseEvent) => {
+      if (
+        event.defaultPrevented ||
+        event.button !== 0 ||
+        event.metaKey ||
+        event.altKey ||
+        event.ctrlKey ||
+        event.shiftKey
+      ) {
+        return;
+      }
+
+      const target = event.target instanceof Element ? event.target : null;
+      const anchor = target?.closest('a[href]') as HTMLAnchorElement | null;
+      if (!anchor || (anchor.target && anchor.target !== '_self') || anchor.hasAttribute('download')) {
+        return;
+      }
+
+      const nextUrl = new URL(anchor.href, window.location.href);
+      if (nextUrl.origin !== window.location.origin) {
+        return;
+      }
+
+      const currentPath = `${window.location.pathname}${window.location.search}${window.location.hash}`;
+      const nextPath = `${nextUrl.pathname}${nextUrl.search}${nextUrl.hash}`;
+      if (nextPath === currentPath) {
+        return;
+      }
+
+      event.preventDefault();
+      event.stopPropagation();
+
+      if (window.confirm(unsavedChangesMessage)) {
+        navigate(nextPath);
+      }
+    };
+
+    document.addEventListener('click', handleDocumentClick, true);
+    return () => document.removeEventListener('click', handleDocumentClick, true);
+  }, [hasUnsavedChanges, navigate, unsavedChangesMessage]);
+
+  useEffect(() => {
+    if (!standardQuestionsData || dirtyOrderForms.standard) return;
+    setDraftDefinitions((prev) => ({ ...prev, standard: cloneDefinition(standardQuestionsData) }));
+  }, [dirtyOrderForms.standard, standardQuestionsData]);
+
+  useEffect(() => {
+    if (!additionalQuestionsData || dirtyOrderForms.additional) return;
+    setDraftDefinitions((prev) => ({ ...prev, additional: cloneDefinition(additionalQuestionsData) }));
+  }, [additionalQuestionsData, dirtyOrderForms.additional]);
 
   useEffect(() => {
     if (!activeDefinition?.sections.length) return;
@@ -320,17 +414,17 @@ export const FormSchemaPage: React.FC = () => {
 
   useEffect(() => {
     setEditingQuestion(null);
-    setFormState((prev) => ({
-      ...EMPTY_FORM,
-      section_id: activeDefinition?.sections[0]?.id || prev.section_id || '',
-    }));
-  }, [activeFormKind, activeDefinition?.sections]);
+    setFormState((prev) => {
+      const nextForm = createEmptyFormState(activeServerFirstSectionId || prev.section_id || '');
+      setFormBaseline(nextForm);
+      return nextForm;
+    });
+  }, [activeFormKind, activeServerFirstSectionId]);
 
   const resetForm = () => {
-    setFormState((prev) => ({
-      ...EMPTY_FORM,
-      section_id: prev.section_id || activeDefinition?.sections[0]?.id || '',
-    }));
+    const nextForm = createEmptyFormState(formState.section_id || activeDefinition?.sections[0]?.id || '');
+    setFormState(nextForm);
+    setFormBaseline(nextForm);
   };
 
   const questionQueryKeyFor = (formKind: ManagedFormKind) =>
@@ -338,6 +432,8 @@ export const FormSchemaPage: React.FC = () => {
 
   const syncQuestionsCache = async (formKind: ManagedFormKind, updatedDefinition: FormQuestionsData) => {
     queryClient.setQueryData(questionQueryKeyFor(formKind), updatedDefinition);
+    setDraftDefinitions((prev) => ({ ...prev, [formKind]: cloneDefinition(updatedDefinition) }));
+    setDirtyOrderForms((prev) => ({ ...prev, [formKind]: false }));
     await queryClient.invalidateQueries({ queryKey: queryKeys.formQuestions.all });
   };
 
@@ -348,8 +444,8 @@ export const FormSchemaPage: React.FC = () => {
       resetForm();
       showToast('Pergunta adicionada com sucesso.', 'success');
     },
-    onError: (error: any) => {
-      showToast(error?.response?.data?.detail || 'Erro ao adicionar pergunta.', 'error');
+    onError: (error: unknown) => {
+      showToast(getApiErrorMessage(error, 'Erro ao adicionar pergunta.'), 'error');
     },
   });
 
@@ -362,8 +458,8 @@ export const FormSchemaPage: React.FC = () => {
       resetForm();
       showToast('Pergunta atualizada com sucesso.', 'success');
     },
-    onError: (error: any) => {
-      showToast(error?.response?.data?.detail || 'Erro ao atualizar pergunta.', 'error');
+    onError: (error: unknown) => {
+      showToast(getApiErrorMessage(error, 'Erro ao atualizar pergunta.'), 'error');
     },
   });
 
@@ -374,8 +470,25 @@ export const FormSchemaPage: React.FC = () => {
       await syncQuestionsCache(variables.formKind, updatedDefinition);
       showToast('Pergunta removida com sucesso.', 'success');
     },
-    onError: (error: any) => {
-      showToast(error?.response?.data?.detail || 'Erro ao remover pergunta.', 'error');
+    onError: (error: unknown) => {
+      showToast(getApiErrorMessage(error, 'Erro ao remover pergunta.'), 'error');
+    },
+  });
+
+  const saveQuestionOrderMutation = useMutation({
+    mutationFn: async ({ formKind, definition }: { formKind: ManagedFormKind; definition: FormQuestionsData }) =>
+      formQuestionsService.saveQuestionOrder(formKind, {
+        sections: definition.sections.map((section) => ({
+          section_id: section.id,
+          question_ids: section.questions.map((question) => question.id),
+        })),
+      }),
+    onSuccess: async (updatedDefinition, variables) => {
+      await syncQuestionsCache(variables.formKind, updatedDefinition);
+      showToast('Ordem das perguntas salva.', 'success');
+    },
+    onError: (error: unknown) => {
+      showToast(getApiErrorMessage(error, 'Erro ao salvar ordem das perguntas.'), 'error');
     },
   });
 
@@ -463,7 +576,7 @@ export const FormSchemaPage: React.FC = () => {
         ? question.conditional.value
         : question.conditional?.value_not ?? '';
 
-    setFormState({
+    const nextForm: QuestionFormState = {
       section_id: sectionId,
       insert_after_question_id: '',
       id: question.id,
@@ -480,7 +593,9 @@ export const FormSchemaPage: React.FC = () => {
       conditionalDependsOn: question.conditional?.depends_on ?? '',
       conditionalOperator: question.conditional?.value_not !== undefined ? 'not_equals' : 'equals',
       conditionalValue,
-    });
+    };
+    setFormState(nextForm);
+    setFormBaseline(nextForm);
     setEditingQuestion({
       formKind: activeFormKind,
       sectionId,
@@ -494,6 +609,11 @@ export const FormSchemaPage: React.FC = () => {
 
     if (!activeDefinition) {
       showToast('As definições do formulário ainda não carregaram.', 'warning');
+      return;
+    }
+
+    if (hasActiveOrderChanges) {
+      showToast('Salve ou descarte a nova ordem antes de alterar perguntas.', 'warning');
       return;
     }
 
@@ -512,6 +632,11 @@ export const FormSchemaPage: React.FC = () => {
   };
 
   const handleDelete = (questionId: string) => {
+    if (hasActiveOrderChanges) {
+      showToast('Salve ou descarte a nova ordem antes de remover perguntas.', 'warning');
+      return;
+    }
+
     if (!window.confirm(`Remover a pergunta "${questionId}"? Essa ação altera o formulário imediatamente.`)) {
       return;
     }
@@ -519,7 +644,80 @@ export const FormSchemaPage: React.FC = () => {
     removeQuestionMutation.mutate({ formKind: activeFormKind, questionId });
   };
 
-  const isSaving = addQuestionMutation.isPending || updateQuestionMutation.isPending;
+  const moveQuestionInDraft = (
+    sourceSectionId: string,
+    questionId: string,
+    targetSectionId: string,
+    targetQuestionId?: string,
+    placement: 'before' | 'after' = 'after'
+  ) => {
+    setDraftDefinitions((prev) => {
+      const baseDefinition = prev[activeFormKind] ?? serverActiveDefinition;
+      if (!baseDefinition) return prev;
+
+      const nextDefinition = cloneDefinition(baseDefinition);
+      const sourceSection = nextDefinition.sections.find((section) => section.id === sourceSectionId);
+      const targetSection = nextDefinition.sections.find((section) => section.id === targetSectionId);
+      if (!sourceSection || !targetSection) return prev;
+
+      const sourceIndex = sourceSection.questions.findIndex((question) => question.id === questionId);
+      if (sourceIndex === -1) return prev;
+
+      const [movedQuestion] = sourceSection.questions.splice(sourceIndex, 1);
+      const targetIndex = targetQuestionId
+        ? targetSection.questions.findIndex((question) => question.id === targetQuestionId)
+        : targetSection.questions.length;
+      const insertIndex = targetIndex >= 0
+        ? targetIndex + (placement === 'after' ? 1 : 0)
+        : targetSection.questions.length;
+      targetSection.questions.splice(insertIndex, 0, movedQuestion);
+
+      return { ...prev, [activeFormKind]: nextDefinition };
+    });
+    setDirtyOrderForms((prev) => ({ ...prev, [activeFormKind]: true }));
+  };
+
+  const handleQuestionDrop = (
+    event: React.DragEvent,
+    targetSectionId: string,
+    targetQuestionId?: string,
+    placement: 'before' | 'after' = 'after'
+  ) => {
+    event.preventDefault();
+    event.stopPropagation();
+    if (!draggedQuestion) return;
+
+    if (draggedQuestion.sectionId === targetSectionId && draggedQuestion.questionId === targetQuestionId) {
+      setDraggedQuestion(null);
+      setDragOverTarget(null);
+      return;
+    }
+
+    moveQuestionInDraft(draggedQuestion.sectionId, draggedQuestion.questionId, targetSectionId, targetQuestionId, placement);
+    setDraggedQuestion(null);
+    setDragOverTarget(null);
+  };
+
+  const handleSaveOrder = () => {
+    const definition = draftDefinitions[activeFormKind];
+    if (!definition) return;
+    saveQuestionOrderMutation.mutate({ formKind: activeFormKind, definition });
+  };
+
+  const handleDiscardOrder = () => {
+    if (!serverActiveDefinition) return;
+    setDraftDefinitions((prev) => ({ ...prev, [activeFormKind]: cloneDefinition(serverActiveDefinition) }));
+    setDirtyOrderForms((prev) => ({ ...prev, [activeFormKind]: false }));
+    showToast('Alterações de ordem descartadas.', 'success');
+  };
+
+  const handleFormKindChange = (formKind: ManagedFormKind) => {
+    if (formKind === activeFormKind) return;
+    if (isQuestionDraftDirty && !window.confirm(unsavedChangesMessage)) return;
+    setActiveFormKind(formKind);
+  };
+
+  const isSaving = addQuestionMutation.isPending || updateQuestionMutation.isPending || saveQuestionOrderMutation.isPending;
 
   if (!user?.is_form_admin) {
     return (
@@ -547,24 +745,23 @@ export const FormSchemaPage: React.FC = () => {
         <section className="bg-white rounded-lg border border-gray-200 p-4">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex bg-gray-100 p-1 rounded-lg w-full sm:w-auto">
-            {(['standard', 'additional'] as ManagedFormKind[]).map((formKind) => {
-              const definition = formKind === 'standard' ? standardQuestionsData : additionalQuestionsData;
-              const isActive = activeFormKind === formKind;
-              return (
-                <button
-                  key={formKind}
-                  type="button"
-                  onClick={() => setActiveFormKind(formKind)}
-                  className={`flex-1 sm:flex-initial px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-                    isActive
-                      ? 'bg-white text-gray-900 shadow-sm'
-                      : 'text-gray-500 hover:text-gray-700'
-                  }`}
-                >
-                  {getDefinitionTitle(formKind, definition)}
-                </button>
-              );
-            })}
+              {(['standard', 'additional'] as ManagedFormKind[]).map((formKind) => {
+                const definition = formKind === 'standard' ? standardQuestionsData : additionalQuestionsData;
+                const isActive = activeFormKind === formKind;
+                return (
+                  <button
+                    key={formKind}
+                    type="button"
+                    onClick={() => handleFormKindChange(formKind)}
+                    className={`flex-1 sm:flex-initial px-4 py-2 rounded-md text-sm font-medium transition-colors ${isActive
+                        ? 'bg-white text-gray-900 shadow-sm'
+                        : 'text-gray-500 hover:text-gray-700'
+                      }`}
+                  >
+                    {getDefinitionTitle(formKind, definition)}
+                  </button>
+                );
+              })}
             </div>
             <Button
               type="button"
@@ -926,13 +1123,37 @@ export const FormSchemaPage: React.FC = () => {
           </div>
 
           <div className="bg-white rounded-lg border border-gray-200 p-6">
-            <div className="flex items-center justify-between mb-5">
+            <div className="flex flex-col gap-4 mb-5 sm:flex-row sm:items-center sm:justify-between">
               <div>
                 <h2 className="text-xl font-semibold text-gray-900">Perguntas Atuais</h2>
                 <p className="text-sm text-gray-500">
-                  Remoções são bloqueadas para perguntas críticas ou dependidas por outras regras.
+                  Arraste as perguntas para reorganizar. A ordem so muda no sistema depois de salvar.
                 </p>
               </div>
+              {hasActiveOrderChanges && (
+                <div className="flex flex-wrap gap-2">
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    size="sm"
+                    onClick={handleSaveOrder}
+                    isLoading={saveQuestionOrderMutation.isPending}
+                    className="min-w-[104px]"
+                  >
+                    Salvar
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="danger"
+                    size="sm"
+                    onClick={handleDiscardOrder}
+                    disabled={saveQuestionOrderMutation.isPending}
+                    className="min-w-[104px]"
+                  >
+                    Descartar
+                  </Button>
+                </div>
+              )}
             </div>
 
             {isLoading || !activeDefinition ? (
@@ -946,20 +1167,66 @@ export const FormSchemaPage: React.FC = () => {
                       <p className="text-xs text-gray-500 mt-1">{section.id}</p>
                     </div>
 
-                    <div className="divide-y divide-gray-100">
+                    <div
+                      className="divide-y divide-gray-100"
+                      onDragOver={(event) => event.preventDefault()}
+                      onDrop={(event) => handleQuestionDrop(event, section.id)}
+                    >
                       {section.questions.length === 0 ? (
-                        <div className="px-4 py-4 text-sm text-gray-500">Nenhuma pergunta nesta seção.</div>
+                        <div
+                          className={`px-4 py-4 text-sm transition-colors ${
+                            draggedQuestion
+                              ? 'border-2 border-dashed border-gray-300 bg-gray-50 text-gray-700'
+                              : 'text-gray-500'
+                          }`}
+                        >
+                          {draggedQuestion ? 'Soltar aqui' : 'Nenhuma pergunta nesta seção.'}
+                        </div>
                       ) : section.questions.map((question) => {
                         const isProtected = PROTECTED_QUESTION_IDS.has(question.id);
                         return (
-                          <div key={question.id} className="px-4 py-4 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between hover:bg-gray-50/70 transition-colors">
+                          <div
+                            key={question.id}
+                            onDragOver={(event) => {
+                              event.preventDefault();
+                              const rect = event.currentTarget.getBoundingClientRect();
+                              const placement = event.clientY > rect.top + rect.height / 2 ? 'after' : 'before';
+                              setDragOverTarget({ questionId: question.id, placement });
+                            }}
+                            onDragLeave={(event) => {
+                              if (!event.currentTarget.contains(event.relatedTarget as Node | null)) {
+                                setDragOverTarget(null);
+                              }
+                            }}
+                            onDrop={(event) => handleQuestionDrop(event, section.id, question.id, dragOverTarget?.placement ?? 'after')}
+                            className={`relative px-4 py-4 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between transition-colors ${dragOverTarget?.questionId === question.id
+                                ? 'bg-gray-100 ring-1 ring-gray-300'
+                                : 'hover:bg-gray-50/70'
+                              }`}
+                          >
+                            {dragOverTarget?.questionId === question.id && (
+                              <div
+                                className={`pointer-events-none absolute left-3 right-3 z-10 flex items-center gap-2 ${
+                                  dragOverTarget.placement === 'before' ? '-top-2' : '-bottom-2'
+                                }`}
+                              >
+                                <span className="h-0.5 flex-1 rounded-full bg-gray-900 shadow-sm" />
+                                <span className="rounded-full bg-gray-900 px-2 py-0.5 text-[11px] font-medium text-white shadow-sm">
+                                  Soltar aqui
+                                </span>
+                                <span className="h-0.5 flex-1 rounded-full bg-gray-900 shadow-sm" />
+                              </div>
+                            )}
                             <button
                               type="button"
                               onClick={() => setQuestionPreview({ sectionTitle: section.title, question })}
                               className="flex-1 text-left"
                             >
                               <div className="flex flex-wrap items-center gap-2 mb-2">
-                                <h4 className="font-medium text-gray-900">{question.label}</h4>
+                                <h4 className="font-medium text-gray-900">
+                                  {question.label}
+                                  {question.required && <span className="ml-1 text-red-500">*</span>}
+                                </h4>
                                 <span className="text-xs font-medium px-2 py-1 rounded-full bg-gray-100 text-gray-700 border border-gray-200">
                                   {QUESTION_TYPE_HELP[question.type].label}
                                 </span>
@@ -973,7 +1240,6 @@ export const FormSchemaPage: React.FC = () => {
                                 )}
                               </div>
                               <div className="text-sm text-gray-500 space-y-1">
-                                {question.required && <p>Obrigatória</p>}
                                 {question.options && question.options.length > 0 && (
                                   <p>{question.options.length} opção(ões)</p>
                                 )}
@@ -984,6 +1250,27 @@ export const FormSchemaPage: React.FC = () => {
                             </button>
 
                             <div className="flex items-center gap-2">
+                              <span
+                                role="button"
+                                tabIndex={0}
+                                draggable={!isSaving && !removeQuestionMutation.isPending}
+                                onDragStart={(event) => {
+                                  event.dataTransfer.effectAllowed = 'move';
+                                  setDraggedQuestion({ sectionId: section.id, questionId: question.id });
+                                }}
+                                onDragEnd={() => {
+                                  setDraggedQuestion(null);
+                                  setDragOverTarget(null);
+                                }}
+                                title="Arrastar pergunta"
+                                aria-label={`Arrastar ${question.label}`}
+                                className="inline-flex h-8 w-8 cursor-grab items-center justify-center rounded-md border border-gray-200 text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700 active:cursor-grabbing"
+                              >
+                                <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                  <path d="M9 5.5A1.5 1.5 0 117.5 4 1.5 1.5 0 019 5.5zm0 6A1.5 1.5 0 117.5 10 1.5 1.5 0 019 11.5zm0 6A1.5 1.5 0 117.5 16 1.5 1.5 0 019 17.5zm7.5-12A1.5 1.5 0 1115 4a1.5 1.5 0 011.5 1.5zm0 6A1.5 1.5 0 1115 10a1.5 1.5 0 011.5 1.5zm0 6A1.5 1.5 0 1115 16a1.5 1.5 0 011.5 1.5z" />
+                                </svg>
+                              </span>
+
                               <button
                                 type="button"
                                 onClick={() => loadQuestionIntoForm(section.id, question)}
@@ -1056,11 +1343,6 @@ export const FormSchemaPage: React.FC = () => {
                 <span className="text-xs font-medium px-2 py-1 rounded-full bg-gray-50 text-gray-700 border border-gray-200">
                   {questionPreview.question.id}
                 </span>
-                {questionPreview.question.required && (
-                  <span className="text-xs font-medium px-2 py-1 rounded-full bg-gray-100 text-gray-700 border border-gray-200">
-                    obrigatória
-                  </span>
-                )}
               </div>
 
               <div className="space-y-4">
@@ -1122,11 +1404,6 @@ export const FormSchemaPage: React.FC = () => {
                           <span className="text-xs font-medium px-2 py-1 rounded-full bg-white text-gray-700 border border-gray-200">
                             {QUESTION_TYPE_HELP[question.type].label}
                           </span>
-                          {question.required && (
-                            <span className="text-xs font-medium px-2 py-1 rounded-full bg-white text-gray-700 border border-gray-200">
-                              obrigatória
-                            </span>
-                          )}
                         </div>
                         <label className="block text-sm font-medium text-gray-900 mb-3">
                           {question.label}

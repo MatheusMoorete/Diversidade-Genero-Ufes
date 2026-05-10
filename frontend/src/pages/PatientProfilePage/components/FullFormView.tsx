@@ -1,6 +1,6 @@
 import React from 'react';
 import { formatDisplayValue } from '../utils';
-import type { FormQuestionsData } from '@/types';
+import type { FormQuestion, FormQuestionsData, FormSection } from '@/types';
 
 interface FullFormViewProps {
     data: Record<string, unknown>;
@@ -16,8 +16,8 @@ export const FullFormView: React.FC<FullFormViewProps> = ({ data, questionsData,
 
     const alwaysVisibleSectionIds = new Set(['lab_and_bioimpedance']);
 
-    const renderSection = (section: any) => {
-        const answeredQuestions = section.questions.filter((q: any) =>
+    const renderSection = (section: FormSection) => {
+        const answeredQuestions = section.questions.filter((q: FormQuestion) =>
             data[q.id] !== undefined && data[q.id] !== null && data[q.id] !== ''
         );
 
@@ -31,7 +31,7 @@ export const FullFormView: React.FC<FullFormViewProps> = ({ data, questionsData,
                     {section.title}
                 </h5>
                 <div className="space-y-4">
-                    {section.questions.map((q: any) => {
+                    {section.questions.map((q: FormQuestion) => {
                         const val = data[q.id];
                         if (!shouldRenderAllQuestions && (val === undefined || val === null || val === '')) return null;
                         return (

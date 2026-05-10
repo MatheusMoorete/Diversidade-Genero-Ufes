@@ -9,12 +9,12 @@ sqlalchemy>=2.0.36
 psycopg2-binary>=2.9.9  # Driver PostgreSQL para Neon
 
 # Autenticação e segurança
-python-jose[cryptography]==3.3.0
+python-jose[cryptography]==3.5.0
 passlib[bcrypt]==1.7.4
-python-multipart==0.0.6
+python-multipart==0.0.28
 
 # Criptografia para CPF
-cryptography==41.0.7
+cryptography==48.0.0
 
 # Validação de dados
 pydantic>=2.10.0
@@ -32,4 +32,3 @@ openpyxl>=3.1.5
 
 # CORS
 # (incluído no FastAPI)
-

@@ -105,6 +105,20 @@ class FormQuestionUpdateRequest(BaseModel):
     question: FormQuestionDefinition
 
 
+class FormQuestionReorderRequest(BaseModel):
+    section_id: str = Field(..., min_length=2, max_length=64)
+    insert_after_question_id: Optional[str] = Field(None, min_length=2, max_length=64)
+
+
+class FormQuestionOrderSection(BaseModel):
+    section_id: str = Field(..., min_length=2, max_length=64)
+    question_ids: List[str] = Field(default_factory=list)
+
+
+class FormQuestionOrderRequest(BaseModel):
+    sections: List[FormQuestionOrderSection] = Field(..., min_length=1)
+
+
 # Schemas para Patient
 class PatientBase(BaseModel):
     """Schema base para Patient."""
@@ -168,6 +182,27 @@ class FormResponseResponse(FormResponseBase):
 
 
 # Schemas para Autenticação
+class FormDraftPayload(BaseModel):
+    """Payload de rascunho de consulta em andamento."""
+    draft_key: str = Field("consultation", min_length=1, max_length=100)
+    is_creating_new_patient: bool = False
+    selected_patient: Optional[Dict[str, Any]] = None
+    form_data: Dict[str, Any] = Field(default_factory=dict)
+    next_return_date: Optional[str] = Field(None, max_length=40)
+    questions_version: Optional[str] = Field(None, max_length=80)
+
+
+class FormDraftResponse(FormDraftPayload):
+    """Resposta de rascunho salvo no backend."""
+    id: int
+    created_by_user_id: int
+    created_at: datetime
+    updated_at: Optional[datetime] = None
+
+    class Config:
+        from_attributes = True
+
+
 class Token(BaseModel):
     """Schema para resposta de token JWT."""
     access_token: str

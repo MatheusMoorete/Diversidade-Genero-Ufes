@@ -4,12 +4,13 @@
 
 import React, { useState, useRef } from 'react';
 import { useMutation } from '@tanstack/react-query';
-import { exportService, backupService } from '@/services/api';
+import { exportService, backupService, getApiErrorMessage } from '@/services/api';
 import { Button } from '@/components/shared/Button';
 import { useToast } from '@/hooks/useToast';
+import type { ImportResult } from '@/types';
 
 export const ExportPage: React.FC = () => {
-  const [importResult, setImportResult] = useState<any>(null);
+  const [importResult, setImportResult] = useState<ImportResult | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { showToast } = useToast();
 
@@ -28,8 +29,8 @@ export const ExportPage: React.FC = () => {
       document.body.removeChild(a);
       showToast('Arquivo Excel exportado com sucesso!', 'success');
     },
-    onError: (error: any) => {
-      showToast(`Erro ao exportar: ${error.response?.data?.detail || error.message}`, 'error');
+    onError: (error: unknown) => {
+      showToast(`Erro ao exportar: ${getApiErrorMessage(error, 'Erro desconhecido')}`, 'error');
     },
   });
 
@@ -46,8 +47,8 @@ export const ExportPage: React.FC = () => {
         result.pacientes_com_erro > 0 ? 'warning' : 'success'
       );
     },
-    onError: (error: any) => {
-      showToast(`Erro ao importar: ${error.response?.data?.detail || error.message}`, 'error');
+    onError: (error: unknown) => {
+      showToast(`Erro ao importar: ${getApiErrorMessage(error, 'Erro desconhecido')}`, 'error');
     },
   });
 
@@ -66,8 +67,8 @@ export const ExportPage: React.FC = () => {
       document.body.removeChild(a);
       showToast('Backup completo baixado com sucesso!', 'success');
     },
-    onError: (error: any) => {
-      showToast(`Erro ao fazer backup: ${error.response?.data?.detail || error.message}`, 'error');
+    onError: (error: unknown) => {
+      showToast(`Erro ao fazer backup: ${getApiErrorMessage(error, 'Erro desconhecido')}`, 'error');
     },
   });
 
@@ -245,7 +246,7 @@ export const ExportPage: React.FC = () => {
               <div>
                 <h3 className="text-sm font-semibold text-gray-700 mb-3">Detalhes dos Erros</h3>
                 <div className="space-y-2 max-h-48 overflow-y-auto">
-                  {importResult.detalhes_erros.map((erro: any, index: number) => (
+                  {importResult.detalhes_erros.map((erro, index: number) => (
                     <div key={index} className="flex items-start p-3 rounded-lg bg-gray-50 border border-gray-100">
                       <div className="flex-1">
                         <p className="text-sm font-medium text-gray-900">{erro.paciente}</p>

@@ -5,6 +5,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
+import { getApiErrorMessage } from '@/services/api';
 
 interface LoginModalProps {
   isOpen: boolean;
@@ -38,8 +39,8 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose }) => {
       await login({ username, password });
       // Login bem-sucedido, fecha o modal
       onClose();
-    } catch (err: any) {
-      setError(err.response?.data?.detail || 'Credenciais inválidas');
+    } catch (err: unknown) {
+      setError(getApiErrorMessage(err, 'Credenciais invalidas'));
     } finally {
       setIsLoading(false);
     }
@@ -178,4 +179,3 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose }) => {
     </div>
   );
 };
-

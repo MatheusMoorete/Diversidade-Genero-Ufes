@@ -56,7 +56,7 @@ if not SECRET_KEY:
         "Gere com: python -c \"import secrets; print(secrets.token_urlsafe(32))\""
     )
 ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 30
+ACCESS_TOKEN_EXPIRE_MINUTES = _get_int_env("ACCESS_TOKEN_EXPIRE_MINUTES", 720)
 JWT_ISSUER = "diversidade-genero-ufes"
 JWT_AUDIENCE = "diversidade-genero-ufes-api"
 AUTH_COOKIE_NAME = os.getenv("AUTH_COOKIE_NAME", "access_token").strip() or "access_token"
@@ -83,14 +83,14 @@ configured_cors_origins = {
 }
 
 if configured_cors_origins:
-    # Mantém os domínios explicitamente configurados e adiciona apenas
-    # origens locais seguras para desenvolvimento.
-    CORS_ORIGINS = sorted(configured_cors_origins | LOCAL_DEV_CORS_ORIGINS)
+    # Respeita exatamente as origens configuradas. Para desenvolvimento local,
+    # inclua localhost no .env ou deixe CORS_ORIGINS vazio para usar o fallback.
+    CORS_ORIGINS = sorted(configured_cors_origins)
 else:
     CORS_ORIGINS = sorted(LOCAL_DEV_CORS_ORIGINS)
 CORS_ALLOW_CREDENTIALS = True
-CORS_ALLOW_METHODS = ["*"]
-CORS_ALLOW_HEADERS = ["*"]
+CORS_ALLOW_METHODS = ["GET", "POST", "PUT", "DELETE", "OPTIONS"]
+CORS_ALLOW_HEADERS = ["Authorization", "Content-Type", "Accept"]
 
 # Configurações de Logging
 LOG_FILE = BASE_DIR / "audit.log"
@@ -115,7 +115,7 @@ EXPORT_DIR = BASE_DIR / "exports"
 FORM_QUESTIONS_FILE = BASE_DIR / "app" / "form_questions.json"
 FORM_QUESTIONS_ADDITIONAL_FILE = BASE_DIR / "app" / "form_questions_additional.json"
 EXCEL_MAX_UPLOAD_SIZE_BYTES = int(os.getenv("EXCEL_MAX_UPLOAD_SIZE_BYTES", str(5 * 1024 * 1024)))
-FORM_SCHEMA_ADMIN_USERS = {"sistema"} | {
+FORM_SCHEMA_ADMIN_USERS = {
     username.strip().lower()
     for username in os.getenv("FORM_SCHEMA_ADMIN_USERS", "").split(",")
     if username.strip()

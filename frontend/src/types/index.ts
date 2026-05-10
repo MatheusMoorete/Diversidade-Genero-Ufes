@@ -44,7 +44,7 @@ export interface FormResponse {
   patient_id: number;
   response_date: string;
   uses_hormone_over_1year: boolean;
-  form_data?: Record<string, any> | null;
+  form_data?: Record<string, unknown> | null;
   next_return_date?: string | null;
   created_by_user_id: number;
   created_at: string;
@@ -88,6 +88,18 @@ export interface FormQuestionCreatePayload {
   };
 }
 
+export interface FormQuestionReorderPayload {
+  section_id: string;
+  insert_after_question_id?: string;
+}
+
+export interface FormQuestionOrderPayload {
+  sections: Array<{
+    section_id: string;
+    question_ids: string[];
+  }>;
+}
+
 export interface PatientCreate {
   full_name: string;
 }
@@ -100,8 +112,24 @@ export interface FormResponseCreate {
   patient_id: number;
   response_date: string;
   uses_hormone_over_1year: boolean;
-  form_data?: Record<string, any> | null;
+  form_data?: Record<string, unknown> | null;
   next_return_date?: string | null;
+}
+
+export interface ConsultationDraftPayload {
+  draft_key?: 'consultation';
+  is_creating_new_patient: boolean;
+  selected_patient?: Patient | null;
+  form_data: Record<string, unknown>;
+  next_return_date?: string | null;
+  questions_version?: string | null;
+}
+
+export interface ConsultationDraft extends ConsultationDraftPayload {
+  id?: number;
+  created_by_user_id?: number;
+  created_at?: string;
+  updated_at: string;
 }
 
 // Re-export form types
@@ -110,7 +138,7 @@ export type { FormQuestion, FormSection, FormQuestionsData } from './form';
 export interface FormResponseUpdate {
   response_date?: string;
   uses_hormone_over_1year?: boolean;
-  form_data?: Record<string, any> | null;
+  form_data?: Record<string, unknown> | null;
   next_return_date?: string | null;
 }
 

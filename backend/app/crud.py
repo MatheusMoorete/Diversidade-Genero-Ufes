@@ -237,6 +237,54 @@ def delete_patient(db: Session, patient_id: int, user_id: int) -> bool:
     return True
 
 
+# CRUD para FormDraft
+def get_form_draft(
+    db: Session,
+    user_id: int,
+    draft_key: str = "consultation",
+) -> Optional[models.FormDraft]:
+    return db.query(models.FormDraft).filter(
+        models.FormDraft.created_by_user_id == user_id,
+        models.FormDraft.draft_key == draft_key,
+    ).first()
+
+
+def upsert_form_draft(
+    db: Session,
+    user_id: int,
+    draft: schemas.FormDraftPayload,
+) -> models.FormDraft:
+    db_draft = get_form_draft(db, user_id=user_id, draft_key=draft.draft_key)
+    if db_draft is None:
+        db_draft = models.FormDraft(
+            draft_key=draft.draft_key,
+            created_by_user_id=user_id,
+        )
+        db.add(db_draft)
+
+    db_draft.is_creating_new_patient = draft.is_creating_new_patient
+    db_draft.selected_patient = draft.selected_patient
+    db_draft.form_data = draft.form_data
+    db_draft.next_return_date = draft.next_return_date
+    db_draft.questions_version = draft.questions_version
+    db.commit()
+    db.refresh(db_draft)
+    return db_draft
+
+
+def delete_form_draft(
+    db: Session,
+    user_id: int,
+    draft_key: str = "consultation",
+) -> bool:
+    db_draft = get_form_draft(db, user_id=user_id, draft_key=draft_key)
+    if db_draft is None:
+        return False
+    db.delete(db_draft)
+    db.commit()
+    return True
+
+
 # CRUD para FormResponse
 def create_form_response(
     db: Session, 

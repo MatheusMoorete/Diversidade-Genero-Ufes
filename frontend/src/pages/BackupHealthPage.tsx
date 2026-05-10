@@ -6,7 +6,7 @@ import { ptBR } from 'date-fns/locale';
 import { Button } from '@/components/shared/Button';
 import { queryKeys } from '@/config/queryKeys';
 import { useToast } from '@/hooks/useToast';
-import { backupService } from '@/services/api';
+import { backupService, getApiErrorMessage } from '@/services/api';
 
 const formatDate = (value?: string | null) => {
   if (!value) return 'Nao informado';
@@ -34,9 +34,9 @@ export const BackupHealthPage: React.FC = () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.backup.all });
       showToast('Snapshot do Neon criado com sucesso.', 'success');
     },
-    onError: (error: any) => {
+    onError: (error: unknown) => {
       showToast(
-        `Erro ao criar snapshot: ${error.response?.data?.detail || error.message}`,
+        `Erro ao criar snapshot: ${getApiErrorMessage(error, 'Erro desconhecido')}`,
         'error'
       );
     },

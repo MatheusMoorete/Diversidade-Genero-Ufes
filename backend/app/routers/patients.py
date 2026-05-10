@@ -35,7 +35,7 @@ async def create_patient(
     Requer autenticação.
     """
     db_patient = crud.create_patient(db=db, patient=patient, user_id=current_user.id)
-    logger.info(f"Paciente criado: {db_patient.id} - {db_patient.full_name} por usuário: {current_user.username}")
+    logger.info("Paciente criado: %s por usuario: %s", db_patient.id, current_user.username)
     return db_patient
 
 

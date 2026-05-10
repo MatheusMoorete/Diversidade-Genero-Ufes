@@ -2,10 +2,14 @@
  * Configuracao central da API.
  */
 
-import axios, { AxiosError, AxiosInstance } from 'axios';
+import axios, { AxiosError, AxiosInstance, AxiosRequestConfig } from 'axios';
 import type {
   ApiError,
+  ConsultationDraft,
+  ConsultationDraftPayload,
   FormQuestionCreatePayload,
+  FormQuestionOrderPayload,
+  FormQuestionReorderPayload,
   FormQuestionsData,
   FormResponse,
   FormResponseCreate,
@@ -25,8 +29,30 @@ const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
 let onUnauthorizedCallback: (() => void) | null = null;
 
+interface ApiRequestConfig extends AxiosRequestConfig {
+  skipUnauthorizedHandler?: boolean;
+}
+
 export const setUnauthorizedCallback = (callback: () => void) => {
   onUnauthorizedCallback = callback;
+};
+
+export const getApiErrorMessage = (error: unknown, fallback: string): string => {
+  if (axios.isAxiosError<ApiError>(error)) {
+    const detail = error.response?.data?.detail;
+    if (typeof detail === 'string' && detail.trim()) {
+      return detail;
+    }
+    if (error.message) {
+      return error.message;
+    }
+  }
+
+  if (error instanceof Error && error.message) {
+    return error.message;
+  }
+
+  return fallback;
 };
 
 const api: AxiosInstance = axios.create({
@@ -40,7 +66,9 @@ const api: AxiosInstance = axios.create({
 api.interceptors.response.use(
   (response) => response,
   (error: AxiosError<ApiError>) => {
-    if (error.response?.status === 401) {
+    const requestConfig = error.config as ApiRequestConfig | undefined;
+
+    if (error.response?.status === 401 && !requestConfig?.skipUnauthorizedHandler) {
       if (onUnauthorizedCallback) {
         onUnauthorizedCallback();
       } else {
@@ -73,8 +101,11 @@ export const authService = {
     return response.data;
   },
 
-  async getCurrentUser(): Promise<User> {
-    const response = await api.get<User>('/api/auth/me');
+  async getCurrentUser(options?: { skipUnauthorizedHandler?: boolean }): Promise<User> {
+    const config: ApiRequestConfig = {
+      skipUnauthorizedHandler: options?.skipUnauthorizedHandler,
+    };
+    const response = await api.get<User>('/api/auth/me', config);
     return response.data;
   },
 
@@ -148,6 +179,29 @@ export const formService = {
 
   async deleteFormResponse(id: number): Promise<void> {
     await api.delete(`/api/form-responses/${id}`);
+  },
+
+  async getConsultationDraft(): Promise<ConsultationDraft | null> {
+    const response = await api.get<ConsultationDraft | null>('/api/form-responses/drafts/consultation', {
+      skipUnauthorizedHandler: true,
+    } as ApiRequestConfig);
+    return response.data;
+  },
+
+  async saveConsultationDraft(data: ConsultationDraftPayload): Promise<ConsultationDraft> {
+    const response = await api.put<ConsultationDraft>('/api/form-responses/drafts/consultation', {
+      ...data,
+      draft_key: 'consultation',
+    }, {
+      skipUnauthorizedHandler: true,
+    } as ApiRequestConfig);
+    return response.data;
+  },
+
+  async deleteConsultationDraft(): Promise<void> {
+    await api.delete('/api/form-responses/drafts/consultation', {
+      skipUnauthorizedHandler: true,
+    } as ApiRequestConfig);
   },
 };
 
@@ -237,6 +291,29 @@ export const formQuestionsService = {
     payload: FormQuestionCreatePayload
   ): Promise<FormQuestionsData> {
     const response = await api.put<FormQuestionsData>(`/api/form-questions/${formKind}/questions/${questionId}`, payload);
+    return response.data;
+  },
+
+  async reorderQuestion(
+    formKind: ManagedFormKind,
+    questionId: string,
+    payload: FormQuestionReorderPayload
+  ): Promise<FormQuestionsData> {
+    const response = await api.put<FormQuestionsData>(
+      `/api/form-questions/${formKind}/questions/${questionId}/position`,
+      payload
+    );
+    return response.data;
+  },
+
+  async saveQuestionOrder(
+    formKind: ManagedFormKind,
+    payload: FormQuestionOrderPayload
+  ): Promise<FormQuestionsData> {
+    const response = await api.put<FormQuestionsData>(
+      `/api/form-questions/${formKind}/questions/order`,
+      payload
+    );
     return response.data;
   },
 };

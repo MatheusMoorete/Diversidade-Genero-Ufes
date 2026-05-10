@@ -12,18 +12,29 @@ import { FloatingLabelInput } from '@/components/shared/FloatingLabelInput';
 import { Button } from '@/components/shared/Button';
 import { DynamicForm } from '@/components/Form/DynamicForm';
 import { patientService, formService, formQuestionsService } from '@/services/api';
+import { useAuth } from '@/hooks/useAuth';
 import { useFormQuestionsCache } from '@/hooks/useFormQuestionsCache';
 import { useToast } from '@/hooks/useToast';
-import type { Patient, FormResponseCreate, FormQuestionsData } from '@/types';
+import type { ConsultationDraft, ConsultationDraftPayload, Patient, FormResponseCreate, FormQuestionsData } from '@/types';
 import { getReturnQuestionsData } from '@/utils/formQuestions';
+import {
+  deleteLocalConsultationDraft,
+  getConsultationDraftKey,
+  loadLocalConsultationDraft,
+  saveLocalConsultationDraft,
+} from '@/utils/consultationDraftStorage';
 
 export const FormPage: React.FC = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  const { user } = useAuth();
   const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
   const [nextReturnDate, setNextReturnDate] = useState('');
   const [formData, setFormData] = useState<Record<string, unknown>>({});
   const [isCreatingNewPatient, setIsCreatingNewPatient] = useState(false);
+  const [availableDraft, setAvailableDraft] = useState<ConsultationDraft | null>(null);
+  const [lastDraftSavedAt, setLastDraftSavedAt] = useState<string | null>(null);
+  const [isDraftLoadComplete, setIsDraftLoadComplete] = useState(false);
   const queryClient = useQueryClient();
   const { showToast } = useToast();
   const selectedPatientIdFromUrl = searchParams.get('patientId');
@@ -139,6 +150,125 @@ export const FormPage: React.FC = () => {
     (isFirstTime && isLoadingAdditionalQuestions) ||
     (!isFirstTime && isLoadingAdditionalQuestions);
 
+  const draftStorageKey = user ? getConsultationDraftKey(user.id) : null;
+  const questionsVersion = questionsData?.version ?? null;
+  const hasDraftableContent = isCreatingNewPatient ||
+    Boolean(selectedPatient) ||
+    Object.keys(formData).length > 0 ||
+    Boolean(nextReturnDate);
+
+  const currentDraft = React.useMemo<ConsultationDraftPayload>(() => ({
+    draft_key: 'consultation',
+    is_creating_new_patient: isCreatingNewPatient,
+    selected_patient: selectedPatient,
+    form_data: formData,
+    next_return_date: nextReturnDate || null,
+    questions_version: questionsVersion,
+  }), [formData, isCreatingNewPatient, nextReturnDate, questionsVersion, selectedPatient]);
+
+  const clearConsultationDraft = React.useCallback(() => {
+    if (draftStorageKey) {
+      deleteLocalConsultationDraft(draftStorageKey).catch(() => undefined);
+    }
+    formService.deleteConsultationDraft().catch(() => undefined);
+    setAvailableDraft(null);
+    setLastDraftSavedAt(null);
+  }, [draftStorageKey]);
+
+  const restoreConsultationDraft = (draft: ConsultationDraft) => {
+    setIsCreatingNewPatient(draft.is_creating_new_patient);
+    setSelectedPatient(draft.selected_patient ?? null);
+    setFormData(draft.form_data ?? {});
+    setNextReturnDate(draft.next_return_date ?? '');
+    setAvailableDraft(null);
+    showToast('Rascunho restaurado.', 'success');
+  };
+
+  const discardAvailableDraft = () => {
+    clearConsultationDraft();
+    showToast('Rascunho descartado.', 'success');
+  };
+
+  React.useEffect(() => {
+    if (!draftStorageKey) return;
+
+    let cancelled = false;
+
+    const loadDraft = async () => {
+      const [localResult, backendResult] = await Promise.allSettled([
+        loadLocalConsultationDraft(draftStorageKey),
+        formService.getConsultationDraft(),
+      ]);
+
+      const localDraft = localResult.status === 'fulfilled' ? localResult.value : null;
+      const backendDraft = backendResult.status === 'fulfilled' ? backendResult.value : null;
+      const candidates = [localDraft, backendDraft].filter(Boolean) as ConsultationDraft[];
+      const latestDraft = candidates.sort((a, b) =>
+        Date.parse(b.updated_at ?? '') - Date.parse(a.updated_at ?? '')
+      )[0] ?? null;
+
+      if (!cancelled && latestDraft && Object.keys(latestDraft.form_data ?? {}).length > 0) {
+        setAvailableDraft(latestDraft);
+      }
+      if (!cancelled) {
+        setIsDraftLoadComplete(true);
+      }
+    };
+
+    loadDraft().catch(() => {
+      if (!cancelled) setIsDraftLoadComplete(true);
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [draftStorageKey]);
+
+  React.useEffect(() => {
+    if (!draftStorageKey || !isDraftLoadComplete || !hasDraftableContent) return;
+
+    const timeout = window.setTimeout(() => {
+      const draftToSave: ConsultationDraft = {
+        ...currentDraft,
+        updated_at: new Date().toISOString(),
+      };
+      saveLocalConsultationDraft(draftStorageKey, draftToSave)
+        .then(() => setLastDraftSavedAt(draftToSave.updated_at))
+        .catch(() => undefined);
+    }, 700);
+
+    return () => window.clearTimeout(timeout);
+  }, [
+    currentDraft,
+    draftStorageKey,
+    hasDraftableContent,
+    isDraftLoadComplete,
+  ]);
+
+  React.useEffect(() => {
+    if (!isDraftLoadComplete || !hasDraftableContent) return;
+
+    const timeout = window.setTimeout(() => {
+      formService.saveConsultationDraft(currentDraft)
+        .then((draft) => setLastDraftSavedAt(draft.updated_at))
+        .catch(() => undefined);
+    }, 10000);
+
+    return () => window.clearTimeout(timeout);
+  }, [currentDraft, hasDraftableContent, isDraftLoadComplete]);
+
+  React.useEffect(() => {
+    if (!hasDraftableContent) return;
+
+    const handleBeforeUnload = (event: BeforeUnloadEvent) => {
+      event.preventDefault();
+      event.returnValue = '';
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [hasDraftableContent]);
+
   // Mutation para criar paciente
   const createPatientMutation = useMutation({
     mutationFn: patientService.createPatient,
@@ -166,8 +296,8 @@ export const FormPage: React.FC = () => {
       setSelectedPatient(null);
       setNextReturnDate('');
       setFormData({});
-      setFormData({});
       setIsCreatingNewPatient(false);
+      clearConsultationDraft();
       showToast('Formulário salvo com sucesso!', 'success');
     },
     onError: () => {
@@ -177,6 +307,10 @@ export const FormPage: React.FC = () => {
 
   // Inicia criação de novo paciente
   const handleStartNewPatient = () => {
+    if (availableDraft && !window.confirm('Existe um rascunho salvo. Começar outro formulário sem restaurar vai substituir esse rascunho. Continuar?')) {
+      return;
+    }
+    setAvailableDraft(null);
     setIsCreatingNewPatient(true);
     setSelectedPatient(null);
     setFormData({});
@@ -188,6 +322,7 @@ export const FormPage: React.FC = () => {
     setIsCreatingNewPatient(false);
     setFormData({});
     setNextReturnDate('');
+    clearConsultationDraft();
   };
 
   const handleSubmitForm = async (e: React.FormEvent) => {
@@ -281,6 +416,33 @@ export const FormPage: React.FC = () => {
         </div>
 
         {/* Formulário Principal */}
+        {availableDraft && (
+          <div className="mb-6 rounded-lg border border-amber-200 bg-amber-50 p-4">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <p className="font-medium text-amber-900">Rascunho de consulta encontrado</p>
+                <p className="text-sm text-amber-800">
+                  Última atualização: {new Date(availableDraft.updated_at).toLocaleString('pt-BR')}.
+                </p>
+              </div>
+              <div className="flex gap-2">
+                <Button type="button" size="sm" variant="secondary" onClick={() => restoreConsultationDraft(availableDraft)}>
+                  Restaurar
+                </Button>
+                <Button type="button" size="sm" variant="outline" onClick={discardAvailableDraft}>
+                  Descartar
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {lastDraftSavedAt && hasDraftableContent && (
+          <p className="mb-4 text-right text-xs text-gray-500">
+            Rascunho salvo às {new Date(lastDraftSavedAt).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+          </p>
+        )}
+
         <form onSubmit={handleSubmitForm} className="space-y-8">
           {/* Seção: Buscar/Criar Paciente - só aparece se NÃO estiver criando novo */}
           {!isCreatingNewPatient && (

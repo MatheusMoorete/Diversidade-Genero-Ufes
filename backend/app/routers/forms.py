@@ -22,6 +22,8 @@ from app.form_questions_service import (
     add_question,
     load_form_definition,
     remove_question,
+    reorder_question,
+    save_question_order,
     update_question,
 )
 from app.permissions import require_form_schema_admin
@@ -65,6 +67,45 @@ async def create_form_response(
     )
     logger.info(f"Resposta de formulário criada: {db_form_response.id} por usuário: {current_user.username}")
     return db_form_response
+
+
+@router.get("/drafts/consultation", response_model=schemas.FormDraftResponse | None)
+async def read_consultation_draft(
+    request: Request,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(auth.get_current_user),
+):
+    """
+    Retorna o rascunho de consulta do usuario logado, se existir.
+    """
+    return crud.get_form_draft(db, user_id=current_user.id, draft_key="consultation")
+
+
+@router.put("/drafts/consultation", response_model=schemas.FormDraftResponse)
+async def save_consultation_draft(
+    request: Request,
+    payload: schemas.FormDraftPayload,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(auth.get_current_user),
+):
+    """
+    Salva ou atualiza o rascunho de consulta do usuario logado.
+    """
+    payload.draft_key = "consultation"
+    return crud.upsert_form_draft(db, user_id=current_user.id, draft=payload)
+
+
+@router.delete("/drafts/consultation")
+async def delete_consultation_draft(
+    request: Request,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(auth.get_current_user),
+):
+    """
+    Remove o rascunho de consulta do usuario logado.
+    """
+    crud.delete_form_draft(db, user_id=current_user.id, draft_key="consultation")
+    return {"message": "Rascunho removido com sucesso"}
 
 
 @router.get("/patient/{patient_id}", response_model=List[schemas.FormResponseResponse])
@@ -358,6 +399,58 @@ async def delete_form_question(
     updated_definition = remove_question(form_kind=form_kind, question_id=question_id)
     logger.info(
         "Pergunta removida do formulário %s por usuário %s: %s",
+        form_kind,
+        current_user.username,
+        question_id,
+    )
+    return updated_definition
+
+
+@forms_questions_router.put("/{form_kind}/questions/order")
+@limiter.limit(RATE_LIMIT_FORM_SCHEMA_WRITE)
+async def save_form_question_order(
+    request: Request,
+    form_kind: str,
+    payload: schemas.FormQuestionOrderRequest,
+    current_user: models.User = Depends(require_form_schema_admin),
+):
+    """
+    Salva a ordem completa das perguntas do formulario.
+    Restrito a usuarios administradores configurados.
+    """
+    updated_definition = save_question_order(
+        form_kind=form_kind,
+        sections_order=[section.model_dump() for section in payload.sections],
+    )
+    logger.info(
+        "Ordem das perguntas salva no formulario %s por usuario %s",
+        form_kind,
+        current_user.username,
+    )
+    return updated_definition
+
+
+@forms_questions_router.put("/{form_kind}/questions/{question_id}/position")
+@limiter.limit(RATE_LIMIT_FORM_SCHEMA_WRITE)
+async def reorder_form_question(
+    request: Request,
+    form_kind: str,
+    question_id: str,
+    payload: schemas.FormQuestionReorderRequest,
+    current_user: models.User = Depends(require_form_schema_admin),
+):
+    """
+    Reordena uma pergunta dentro de uma secao do formulario.
+    Restrito a usuarios administradores configurados.
+    """
+    updated_definition = reorder_question(
+        form_kind=form_kind,
+        question_id=question_id,
+        section_id=payload.section_id,
+        insert_after_question_id=payload.insert_after_question_id,
+    )
+    logger.info(
+        "Pergunta reordenada no formulario %s por usuario %s: %s",
         form_kind,
         current_user.username,
         question_id,

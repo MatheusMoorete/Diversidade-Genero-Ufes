@@ -1,6 +1,6 @@
 {
-  "version": "2.5.0",
-  "last_updated": "2025-01-16",
+  "version": "2.5.11",
+  "last_updated": "2026-05-10",
   "form_type": "new_patient",
   "form_name": "Questionário DIV - Novo Paciente",
   "description": "Formulário completo para registro de novos pacientes",
@@ -13,15 +13,13 @@
           "id": "using_hormone_therapy",
           "label": "Está em uso de terapia hormonizadora?",
           "type": "radio",
-          "options": ["Sim", "Não"],
-          "required": true
-        },
-        {
-          "id": "hormone_therapy_over_one_year",
-          "label": "Faz tratamento hormonal a mais de um ano?",
-          "type": "radio",
-          "options": ["Sim", "Não"],
-          "required": true
+          "required": true,
+          "options": [
+            "Sim",
+            "Não"
+          ],
+          "readonly": false,
+          "allow_other": false
         },
         {
           "id": "hormone_type_men",
@@ -36,6 +34,16 @@
           ],
           "allow_other": true,
           "required": false
+        },
+        {
+          "id": "hormone_therapy_over_one_year",
+          "label": "Faz tratamento hormonal a mais de um ano?",
+          "type": "radio",
+          "options": [
+            "Sim",
+            "Não"
+          ],
+          "required": true
         },
         {
           "id": "hormone_type_women",
@@ -97,7 +105,13 @@
           "id": "race",
           "label": "Raça",
           "type": "radio",
-          "options": ["Branco", "Preto", "Pardo", "Indígena", "Amarelo"],
+          "options": [
+            "Branco",
+            "Preto",
+            "Pardo",
+            "Indígena",
+            "Amarelo"
+          ],
           "required": false
         },
         {
@@ -110,7 +124,10 @@
           "id": "tcle_signed",
           "label": "TCLE assinado?",
           "type": "radio",
-          "options": ["Sim", "Não"],
+          "options": [
+            "Sim",
+            "Não"
+          ],
           "required": false
         },
         {
@@ -164,7 +181,13 @@
           "id": "household_size",
           "label": "Número de pessoas na casa",
           "type": "radio",
-          "options": ["1", "2", "3", "4", "5 ou mais"],
+          "options": [
+            "1",
+            "2",
+            "3",
+            "4",
+            "5 ou mais"
+          ],
           "required": false
         }
       ]
@@ -177,14 +200,20 @@
           "id": "physical_activity",
           "label": "Pratica atividade física?",
           "type": "radio",
-          "options": ["Sim", "Não"],
+          "options": [
+            "Sim",
+            "Não"
+          ],
           "required": false
         },
         {
           "id": "physical_activity_location",
           "label": "Em qual local?",
           "type": "radio",
-          "options": ["Academia e similares", "Ao ar livre"],
+          "options": [
+            "Academia e similares",
+            "Ao ar livre"
+          ],
           "allow_other": true,
           "required": false,
           "conditional": {
@@ -196,7 +225,11 @@
           "id": "physical_activity_frequency",
           "label": "Quantas vezes por semana?",
           "type": "radio",
-          "options": ["1-2 vezes", "3-4 vezes", "> 4 vezes"],
+          "options": [
+            "1-2 vezes",
+            "3-4 vezes",
+            "> 4 vezes"
+          ],
           "required": false,
           "conditional": {
             "depends_on": "physical_activity",
@@ -207,7 +240,13 @@
           "id": "physical_activity_duration",
           "label": "Duração média de cada sessão?",
           "type": "radio",
-          "options": ["Até 30min", "30-45min", "45-60min", "60-90min", "≥ 90min"],
+          "options": [
+            "Até 30min",
+            "30-45min",
+            "45-60min",
+            "60-90min",
+            "≥ 90min"
+          ],
           "required": false,
           "conditional": {
             "depends_on": "physical_activity",
@@ -301,7 +340,11 @@
           "id": "cigarettes_per_day",
           "label": "Quantidade de cigarros por dia?",
           "type": "radio",
-          "options": ["Até 10", "10-20", "≥ 20"],
+          "options": [
+            "Até 10",
+            "10-20",
+            "≥ 20"
+          ],
           "required": false,
           "conditional": {
             "depends_on": "cigarette_type",
@@ -415,7 +458,10 @@
           "readonly": true,
           "calculated": {
             "formula": "weight / ((height / 100) ^ 2)",
-            "depends_on": ["weight", "height"]
+            "depends_on": [
+              "weight",
+              "height"
+            ]
           }
         }
       ]

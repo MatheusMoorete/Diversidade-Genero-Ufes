@@ -355,12 +355,14 @@ def update_question(
 
     target_payload = deepcopy(payloads[form_kind])
     current_question: dict[str, Any] | None = None
+    current_question_index: int | None = None
 
     for section in target_payload.get("sections", []):
         remaining_questions = []
-        for item in section.get("questions", []):
+        for index, item in enumerate(section.get("questions", [])):
             if item.get("id") == question_id:
                 current_question = deepcopy(item)
+                current_question_index = index
                 continue
             remaining_questions.append(item)
         section["questions"] = remaining_questions
@@ -433,10 +435,155 @@ def update_question(
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="Pergunta de referência não encontrada na seção escolhida",
-            )
+        )
         questions.insert(insert_index + 1, cleaned_question)
+    elif current_section_id == section_id and current_question_index is not None:
+        questions.insert(min(current_question_index, len(questions)), cleaned_question)
     else:
         questions.append(cleaned_question)
+
+    target_payload["version"] = _bump_version(target_payload.get("version"))
+    target_payload["last_updated"] = datetime.now(timezone.utc).date().isoformat()
+    _write_json_atomic(_get_form_path(form_kind), target_payload)
+    return target_payload
+
+
+def reorder_question(
+    *,
+    form_kind: str,
+    question_id: str,
+    section_id: str,
+    insert_after_question_id: str | None,
+) -> dict[str, Any]:
+    """Move an existing question to the start of a section or after another question."""
+    payloads = load_all_form_definitions()
+    question_index = _build_question_index(payloads)
+    if question_id not in question_index:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Pergunta nao encontrada",
+        )
+
+    question_form_kind, _ = question_index[question_id]
+    if question_form_kind != form_kind:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Pergunta nao encontrada no formulario informado",
+        )
+
+    if insert_after_question_id == question_id:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="A pergunta nao pode ser posicionada apos ela mesma",
+        )
+
+    target_payload = deepcopy(payloads[form_kind])
+    current_question: dict[str, Any] | None = None
+
+    for section in target_payload.get("sections", []):
+        remaining_questions = []
+        for item in section.get("questions", []):
+            if item.get("id") == question_id:
+                current_question = deepcopy(item)
+                continue
+            remaining_questions.append(item)
+        section["questions"] = remaining_questions
+
+    if current_question is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Pergunta nao encontrada",
+        )
+
+    target_section = next(
+        (section for section in target_payload.get("sections", []) if section.get("id") == section_id),
+        None,
+    )
+    if target_section is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Secao nao encontrada",
+        )
+
+    questions = target_section.setdefault("questions", [])
+    if insert_after_question_id:
+        insert_index = next(
+            (index for index, item in enumerate(questions) if item.get("id") == insert_after_question_id),
+            None,
+        )
+        if insert_index is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Pergunta de referencia nao encontrada na secao escolhida",
+            )
+        questions.insert(insert_index + 1, current_question)
+    else:
+        questions.insert(0, current_question)
+
+    target_payload["version"] = _bump_version(target_payload.get("version"))
+    target_payload["last_updated"] = datetime.now(timezone.utc).date().isoformat()
+    _write_json_atomic(_get_form_path(form_kind), target_payload)
+    return target_payload
+
+
+def save_question_order(
+    *,
+    form_kind: str,
+    sections_order: list[dict[str, Any]],
+) -> dict[str, Any]:
+    payloads = load_all_form_definitions()
+    if form_kind not in payloads:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Formulario nao encontrado",
+        )
+
+    target_payload = deepcopy(payloads[form_kind])
+    sections = target_payload.get("sections", [])
+    section_by_id = {section.get("id"): section for section in sections}
+    expected_section_ids = set(section_by_id.keys())
+    provided_section_ids = [section.get("section_id") for section in sections_order]
+
+    if len(provided_section_ids) != len(set(provided_section_ids)):
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="A ordem enviada contem secoes repetidas",
+        )
+
+    if set(provided_section_ids) != expected_section_ids:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="A ordem enviada deve conter todas as secoes do formulario",
+        )
+
+    question_by_id: dict[str, dict[str, Any]] = {}
+    for section in sections:
+        for question in section.get("questions", []):
+            question_by_id[question.get("id")] = question
+
+    expected_question_ids = set(question_by_id.keys())
+    provided_question_ids: list[str] = []
+    for section_order in sections_order:
+        provided_question_ids.extend(section_order.get("question_ids", []))
+
+    if len(provided_question_ids) != len(set(provided_question_ids)):
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="A ordem enviada contem perguntas repetidas",
+        )
+
+    if set(provided_question_ids) != expected_question_ids:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="A ordem enviada deve conter todas as perguntas do formulario",
+        )
+
+    for section_order in sections_order:
+        section = section_by_id[section_order["section_id"]]
+        section["questions"] = [
+            question_by_id[question_id]
+            for question_id in section_order.get("question_ids", [])
+        ]
 
     target_payload["version"] = _bump_version(target_payload.get("version"))
     target_payload["last_updated"] = datetime.now(timezone.utc).date().isoformat()

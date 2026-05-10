@@ -5,7 +5,7 @@
 
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { authService } from '@/services/api';
+import { authService, getApiErrorMessage } from '@/services/api';
 
 export const Register: React.FC = () => {
   const [username, setUsername] = useState('');
@@ -44,8 +44,8 @@ export const Register: React.FC = () => {
       await authService.register(username, password);
       setSuccess(true);
       setTimeout(() => navigate('/login'), 2000);
-    } catch (err: any) {
-      setError(err.response?.data?.detail || 'Erro ao criar conta');
+    } catch (err: unknown) {
+      setError(getApiErrorMessage(err, 'Erro ao criar conta'));
     } finally {
       setIsLoading(false);
     }

@@ -6,6 +6,7 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
+import { getApiErrorMessage } from '@/services/api';
 
 export const Login: React.FC = () => {
   const [username, setUsername] = useState('');
@@ -24,8 +25,8 @@ export const Login: React.FC = () => {
     try {
       await login({ username, password });
       navigate('/form');
-    } catch (err: any) {
-      setError(err.response?.data?.detail || 'Credenciais inválidas');
+    } catch (err: unknown) {
+      setError(getApiErrorMessage(err, 'Credenciais invalidas'));
     } finally {
       setIsLoading(false);
     }
