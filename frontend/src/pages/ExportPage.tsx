@@ -43,7 +43,7 @@ export const ExportPage: React.FC = () => {
         fileInputRef.current.value = '';
       }
       showToast(
-        `Importação concluída! ${result.pacientes_criados} criados, ${result.pacientes_com_erro} erros.`,
+        `Importação concluída! ${result.pacientes_criados} pacientes e ${result.respostas_criadas} respostas criados; ${result.pacientes_com_erro} erros.`,
         result.pacientes_com_erro > 0 ? 'warning' : 'success'
       );
     },
@@ -76,8 +76,8 @@ export const ExportPage: React.FC = () => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    if (!file.name.toLowerCase().endsWith('.xlsx') && !file.name.toLowerCase().endsWith('.xls')) {
-      showToast('Por favor, selecione um arquivo Excel (.xlsx ou .xls)', 'warning');
+    if (!file.name.toLowerCase().endsWith('.xlsx')) {
+      showToast('Por favor, selecione um arquivo Excel (.xlsx)', 'warning');
       return;
     }
 
@@ -136,14 +136,14 @@ export const ExportPage: React.FC = () => {
               <div className="flex-1">
                 <h2 className="text-xl font-semibold text-gray-900 mb-2">Importar Dados</h2>
                 <p className="text-gray-600 text-sm mb-4 leading-relaxed">
-                  Carregue pacientes a partir de um arquivo Excel. Requer coluna <code className="bg-gray-100 px-1.5 py-0.5 rounded text-xs">Nome_Completo</code>.
+                  Reimporte um arquivo exportado pelo sistema ou use uma planilha com a coluna <code className="bg-gray-100 px-1.5 py-0.5 rounded text-xs">Nome_Completo</code>.
                 </p>
               </div>
             </div>
             <input
               ref={fileInputRef}
               type="file"
-              accept=".xlsx,.xls"
+              accept=".xlsx"
               onChange={handleImport}
               className="hidden"
               id="file-input"
@@ -200,12 +200,18 @@ export const ExportPage: React.FC = () => {
             </div>
 
             {/* Stats Cards */}
-            <div className="grid grid-cols-3 gap-4 mb-6">
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
               <div className="text-center p-4 rounded-lg bg-emerald-50 border border-emerald-100">
                 <p className="text-3xl font-bold text-emerald-600 mb-1">
                   {importResult.pacientes_criados}
                 </p>
-                <p className="text-xs font-medium text-emerald-700 uppercase tracking-wide">Criados</p>
+                <p className="text-xs font-medium text-emerald-700 uppercase tracking-wide">Pacientes criados</p>
+              </div>
+              <div className="text-center p-4 rounded-lg bg-blue-50 border border-blue-100">
+                <p className="text-3xl font-bold text-blue-600 mb-1">
+                  {importResult.respostas_criadas}
+                </p>
+                <p className="text-xs font-medium text-blue-700 uppercase tracking-wide">Respostas criadas</p>
               </div>
               <div className="text-center p-4 rounded-lg bg-rose-50 border border-rose-100">
                 <p className="text-3xl font-bold text-rose-600 mb-1">
@@ -215,9 +221,9 @@ export const ExportPage: React.FC = () => {
               </div>
               <div className="text-center p-4 rounded-lg bg-slate-50 border border-slate-200">
                 <p className="text-3xl font-bold text-slate-600 mb-1">
-                  {importResult.total_processado}
+                  {importResult.pacientes_reutilizados}
                 </p>
-                <p className="text-xs font-medium text-slate-700 uppercase tracking-wide">Total</p>
+                <p className="text-xs font-medium text-slate-700 uppercase tracking-wide">Já existentes</p>
               </div>
             </div>
 

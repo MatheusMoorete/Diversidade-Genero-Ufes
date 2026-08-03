@@ -12,8 +12,9 @@ from openpyxl import load_workbook
 from openpyxl.styles import Font, PatternFill, Alignment
 from openpyxl.utils import get_column_letter
 from typing import List, Dict, Any, Optional, Tuple
-from datetime import datetime
+from datetime import date, datetime
 import logging
+import re
 from pathlib import Path
 
 from app.config import EXPORT_DIR
@@ -222,6 +223,26 @@ CARRY_FORWARD_FIELDS = {
     "hormone_therapy_over_one_year",
 }
 
+EXPORT_COLUMN_TO_FIELD = {
+    column_name: field_name
+    for field_name, column_name in FIELD_TO_EXPORT_COLUMN.items()
+}
+
+PATIENT_NAME_IMPORT_COLUMNS = (
+    "Nome_Completo",
+    FIELD_TO_EXPORT_COLUMN["patient_name"],
+)
+
+CHECKBOX_FIELDS = {
+    "illicit_drugs_type",
+    "previous_diseases",
+    "mental_health_diagnosis",
+    "hormone_objectives_men",
+    "hormone_objectives_women",
+    "acne_location",
+    "mood_changes",
+}
+
 
 def _clean_form_payload(form_data: Optional[Dict[str, Any]]) -> Dict[str, Any]:
     if not isinstance(form_data, dict):
@@ -247,7 +268,62 @@ def _is_empty_value(value: Any) -> bool:
         return value.strip() == ""
     if isinstance(value, (list, tuple, set)):
         return len(value) == 0
-    return False
+    try:
+        return bool(pd.isna(value))
+    except (TypeError, ValueError):
+        return False
+
+
+def _normalize_import_value(field_name: str, value: Any) -> Any:
+    """Converte tipos do pandas/openpyxl para valores JSON do formulario."""
+    if _is_empty_value(value):
+        return None
+
+    if isinstance(value, pd.Timestamp):
+        value = value.to_pydatetime()
+
+    if isinstance(value, datetime):
+        if field_name == "birth_date":
+            return value.date().isoformat()
+        return value.isoformat()
+
+    if isinstance(value, date):
+        return value.isoformat()
+
+    if hasattr(value, "item") and not isinstance(value, str):
+        value = value.item()
+
+    if isinstance(value, str):
+        value = value.strip()
+        if field_name == "birth_date":
+            try:
+                dayfirst = re.match(r"^\d{4}-\d{2}-\d{2}", value) is None
+                return pd.to_datetime(value, errors="raise", dayfirst=dayfirst).date().isoformat()
+            except (TypeError, ValueError) as exc:
+                raise ValueError("Data de nascimento inválida") from exc
+        if field_name in CHECKBOX_FIELDS:
+            return [item.strip() for item in value.split(",") if item.strip()]
+
+    return value
+
+
+def _parse_response_date(value: Any) -> Optional[datetime]:
+    if _is_empty_value(value):
+        return None
+    try:
+        dayfirst = not (
+            isinstance(value, str)
+            and re.match(r"^\d{4}-\d{2}-\d{2}", value.strip())
+        )
+        parsed = pd.to_datetime(value, errors="raise", dayfirst=dayfirst)
+    except (TypeError, ValueError) as exc:
+        raise ValueError("Carimbo de data/hora invalido") from exc
+
+    if isinstance(parsed, pd.Timestamp):
+        return parsed.to_pydatetime()
+    if isinstance(parsed, datetime):
+        return parsed
+    raise ValueError("Carimbo de data/hora invalido")
 
 
 def _normalize_export_value(value: Any) -> Any:
@@ -364,6 +440,7 @@ def exportar_pacientes_excel(
             form_responses = paciente_info.get("form_responses", [])
 
             if not form_responses:
+                rows.append(_build_survey_row(patient, {}, {}))
                 continue
 
             sorted_responses = sorted(
@@ -466,12 +543,12 @@ def importar_pacientes_excel(
         except Exception as e:
             raise Exception(f"Erro ao ler arquivo Excel: {str(e)}")
         
-        # Valida colunas obrigatórias
-        colunas_obrigatorias = ["Nome_Completo"]
-        colunas_faltando = [col for col in colunas_obrigatorias if col not in df.columns]
-        
-        if colunas_faltando:
-            erros.append(f"Colunas obrigatórias faltando: {', '.join(colunas_faltando)}")
+        # Aceita tanto a planilha simples antiga quanto o arquivo exportado.
+        if not any(column in df.columns for column in PATIENT_NAME_IMPORT_COLUMNS):
+            erros.append(
+                "Coluna de nome obrigatória ausente. Use Nome_Completo ou "
+                f"{FIELD_TO_EXPORT_COLUMN['patient_name']}"
+            )
             return pacientes_validados, erros
         
         # Processa cada linha
@@ -479,8 +556,14 @@ def importar_pacientes_excel(
             linha_num = index + 2  # +2 porque index começa em 0 e há cabeçalho
             
             try:
-                # Limpa e valida nome completo
-                nome_completo = str(row.get("Nome_Completo", "")).strip()
+                # Usa o primeiro alias de nome que estiver preenchido.
+                nome_completo = ""
+                for column in PATIENT_NAME_IMPORT_COLUMNS:
+                    candidate = row.get(column)
+                    if not _is_empty_value(candidate):
+                        nome_completo = str(candidate).strip()
+                        break
+
                 if not nome_completo or nome_completo.lower() in ["nan", "none", ""]:
                     erros.append(f"Linha {linha_num}: Nome completo é obrigatório")
                     continue
@@ -489,10 +572,67 @@ def importar_pacientes_excel(
                     erros.append(f"Linha {linha_num}: Nome completo muito longo (máximo 255 caracteres)")
                     continue
                 
+                form_data: Dict[str, Any] = {}
+                for column_name, field_name in EXPORT_COLUMN_TO_FIELD.items():
+                    if column_name not in df.columns:
+                        continue
+                    normalized_value = _normalize_import_value(field_name, row.get(column_name))
+                    if normalized_value is not None:
+                        form_data[field_name] = normalized_value
+
+                legacy_fields: Dict[str, Any] = {}
+                for legacy_name, column_name in LEGACY_EXPORT_FIELDS.items():
+                    if column_name not in df.columns:
+                        continue
+                    normalized_value = _normalize_import_value(legacy_name, row.get(column_name))
+                    if normalized_value is not None:
+                        legacy_fields[legacy_name] = normalized_value
+
+                duration_column = next(
+                    (column for column in SURVEY_EXPORT_COLUMNS if "quanto tempo" in column),
+                    None,
+                )
+                duration_value = row.get(duration_column) if duration_column else None
+                if not _is_empty_value(duration_value):
+                    duration_text = str(duration_value).strip()
+                    if duration_text == "Mais de 1 ano":
+                        form_data["hormone_therapy_over_one_year"] = "Sim"
+                    elif duration_text == "Menos de 1 ano":
+                        form_data["hormone_therapy_over_one_year"] = "Não"
+                    else:
+                        legacy_fields["therapy_duration_text"] = duration_text
+
+                if legacy_fields:
+                    form_data["_legacy_fields"] = legacy_fields
+
+                response_date = _parse_response_date(row.get(SURVEY_EXPORT_COLUMNS[0]))
+                meaningful_form_data = {
+                    key: value
+                    for key, value in form_data.items()
+                    if key != "patient_name" and not _is_empty_value(value)
+                }
+                has_form_response = response_date is not None or bool(meaningful_form_data)
+
+                if has_form_response and response_date is None:
+                    erros.append(
+                        f"Linha {linha_num}: Carimbo de data/hora é obrigatório quando há dados de formulário"
+                    )
+                    continue
+
                 # Prepara dados do paciente (sem CPF)
                 paciente = {
                     "full_name": nome_completo
                 }
+
+                if has_form_response:
+                    form_data["patient_name"] = nome_completo
+                    paciente["form_response"] = {
+                        "response_date": response_date,
+                        "uses_hormone_over_1year": (
+                            form_data.get("hormone_therapy_over_one_year") == "Sim"
+                        ),
+                        "form_data": form_data,
+                    }
                 
                 # Adiciona campos opcionais se existirem
                 if "ID_Paciente" in df.columns and pd.notna(row.get("ID_Paciente")):
@@ -537,8 +677,8 @@ def validar_estrutura_excel(filepath: str) -> Tuple[bool, List[str]]:
     
     try:
         # Verifica extensão
-        if not str(filepath).lower().endswith(('.xlsx', '.xls')):
-            erros.append("Arquivo deve ser do tipo .xlsx ou .xls")
+        if not str(filepath).lower().endswith('.xlsx'):
+            erros.append("Arquivo deve ser do tipo .xlsx")
             return False, erros
         
         # Tenta abrir o arquivo

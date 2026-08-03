@@ -149,6 +149,9 @@ export interface ApiError {
 export interface ImportResult {
   message: string;
   pacientes_criados: number;
+  pacientes_reutilizados: number;
+  respostas_criadas: number;
+  respostas_duplicadas: number;
   pacientes_com_erro: number;
   total_processado: number;
   erros_validacao: string[];

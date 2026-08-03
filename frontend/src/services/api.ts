@@ -55,6 +55,21 @@ export const getApiErrorMessage = (error: unknown, fallback: string): string => 
   return fallback;
 };
 
+const getBlobApiErrorMessage = async (error: unknown): Promise<string | null> => {
+  if (!axios.isAxiosError(error) || !(error.response?.data instanceof Blob)) {
+    return null;
+  }
+
+  try {
+    const payload = JSON.parse(await error.response.data.text()) as Partial<ApiError>;
+    return typeof payload.detail === 'string' && payload.detail.trim()
+      ? payload.detail
+      : null;
+  } catch {
+    return null;
+  }
+};
+
 const api: AxiosInstance = axios.create({
   baseURL: API_BASE_URL,
   withCredentials: true,
@@ -207,10 +222,18 @@ export const formService = {
 
 export const exportService = {
   async exportExcel(): Promise<Blob> {
-    const response = await api.post('/api/export/excel', {}, {
-      responseType: 'blob',
-    });
-    return response.data;
+    try {
+      const response = await api.post('/api/export/excel', {}, {
+        responseType: 'blob',
+      });
+      return response.data;
+    } catch (error) {
+      const detail = await getBlobApiErrorMessage(error);
+      if (detail) {
+        throw new Error(detail);
+      }
+      throw error;
+    }
   },
 
   async importExcel(file: File): Promise<ImportResult> {

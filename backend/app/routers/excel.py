@@ -10,6 +10,7 @@ SEGURANÇA:
 from fastapi import APIRouter, Depends, HTTPException, Request, UploadFile, File, status
 from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session
+from starlette.background import BackgroundTask
 import logging
 import os
 import tempfile
@@ -23,6 +24,113 @@ logger = logging.getLogger(__name__)
 
 # Cria o router
 router = APIRouter(prefix="/api", tags=["Excel"])
+
+
+def _safe_remove_file(filepath: str) -> None:
+    try:
+        os.remove(filepath)
+    except OSError:
+        pass
+
+
+def _patient_name_key(full_name: str) -> str:
+    return " ".join(full_name.split()).casefold()
+
+
+def _form_response_signature(response_date) -> str:
+    if response_date is None:
+        return ""
+    return response_date.replace(tzinfo=None).isoformat()
+
+
+def _persist_imported_patients(
+    db: Session,
+    user_id: int,
+    imported_rows,
+):
+    """Persiste todas as linhas validas em uma unica transacao."""
+    existing_patients = crud.get_patients(db, user_id=user_id, skip=0, limit=10000)
+    patients_by_name = {
+        _patient_name_key(patient.full_name): patient
+        for patient in existing_patients
+    }
+    preexisting_names = set(patients_by_name)
+    reused_names = set()
+    response_signatures = {}
+
+    for patient in existing_patients:
+        responses = crud.get_form_responses_by_patient(
+            db,
+            patient_id=patient.id,
+            user_id=user_id,
+            skip=0,
+            limit=10000,
+        )
+        response_signatures[patient.id] = {
+            _form_response_signature(
+                response.response_date,
+            )
+            for response in responses
+        }
+
+    created_patients = []
+    created_responses = 0
+    duplicate_responses = 0
+
+    try:
+        for imported in imported_rows:
+            name_key = _patient_name_key(imported["full_name"])
+            patient = patients_by_name.get(name_key)
+
+            if patient is None:
+                patient = crud.create_patient(
+                    db=db,
+                    patient=schemas.PatientCreate(full_name=imported["full_name"]),
+                    user_id=user_id,
+                    commit=False,
+                )
+                patients_by_name[name_key] = patient
+                response_signatures[patient.id] = set()
+                created_patients.append({"id": patient.id, "full_name": patient.full_name})
+            elif name_key in preexisting_names:
+                reused_names.add(name_key)
+
+            imported_response = imported.get("form_response")
+            if not imported_response:
+                continue
+
+            signature = _form_response_signature(
+                imported_response["response_date"],
+            )
+            if signature in response_signatures[patient.id]:
+                duplicate_responses += 1
+                continue
+
+            crud.create_form_response(
+                db=db,
+                form_response=schemas.FormResponseCreate(
+                    patient_id=patient.id,
+                    response_date=imported_response["response_date"],
+                    uses_hormone_over_1year=imported_response["uses_hormone_over_1year"],
+                    form_data=imported_response["form_data"],
+                ),
+                user_id=user_id,
+                commit=False,
+            )
+            response_signatures[patient.id].add(signature)
+            created_responses += 1
+
+        db.commit()
+    except Exception:
+        db.rollback()
+        raise
+
+    return {
+        "created_patients": created_patients,
+        "reused_patients": len(reused_names),
+        "created_responses": created_responses,
+        "duplicate_responses": duplicate_responses,
+    }
 
 
 @router.post("/export/excel")
@@ -99,7 +207,8 @@ async def export_pacientes_excel(
         return FileResponse(
             path=filepath,
             filename=os.path.basename(filepath),
-            media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+            media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            background=BackgroundTask(_safe_remove_file, filepath),
         )
         
     except HTTPException:
@@ -131,10 +240,10 @@ async def import_pacientes_excel(
     
     try:
         # Valida tipo de arquivo
-        if not file.filename.lower().endswith(('.xlsx', '.xls')):
+        if not (file.filename or "").lower().endswith('.xlsx'):
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Arquivo deve ser do tipo .xlsx ou .xls"
+                detail="Arquivo deve ser do tipo .xlsx"
             )
         
         # Salva arquivo temporário em stream com limite de tamanho
@@ -173,78 +282,42 @@ async def import_pacientes_excel(
                 detail=f"Nenhum paciente válido encontrado. Erros: {'; '.join(erros) if erros else 'Arquivo vazio'}"
             )
         
-        # Cria pacientes no banco de dados
-        pacientes_criados = []
-        pacientes_com_erro = []
-        
-        for paciente_data in pacientes_validados:
-            try:
-                # Verifica se paciente já existe para este usuário (por nome)
-                pacientes_existentes = crud.get_patients(
-                    db, 
-                    user_id=current_user.id,
-                    skip=0, 
-                    limit=1000, 
-                    search=paciente_data["full_name"]
-                )
-                
-                # Verifica se já existe paciente com mesmo nome exato
-                paciente_existente = None
-                for p in pacientes_existentes:
-                    if p.full_name.strip().lower() == paciente_data["full_name"].strip().lower():
-                        paciente_existente = p
-                        break
-                
-                if paciente_existente:
-                    pacientes_com_erro.append({
-                        "paciente": paciente_data["full_name"],
-                        "erro": "Paciente já existe no sistema"
-                    })
-                    continue
-                
-                # Cria novo paciente (sem CPF)
-                paciente_create = schemas.PatientCreate(
-                    full_name=paciente_data["full_name"]
-                )
-                
-                # Cria paciente vinculado ao usuário logado
-                novo_paciente = crud.create_patient(
-                    db=db, 
-                    patient=paciente_create,
-                    user_id=current_user.id
-                )
-                pacientes_criados.append({
-                    "id": novo_paciente.id,
-                    "full_name": novo_paciente.full_name
-                })
-                
-            except Exception as e:
-                pacientes_com_erro.append({
-                    "paciente": paciente_data.get("full_name", "Desconhecido"),
-                    "erro": str(e)
-                })
-                continue
+        persistence_result = _persist_imported_patients(
+            db=db,
+            user_id=current_user.id,
+            imported_rows=pacientes_validados,
+        )
+        detalhes_erros = [
+            {"paciente": "Linha da planilha", "erro": erro}
+            for erro in erros
+        ]
         
         logger.info(
             f"Importação Excel realizada por usuário: {current_user.username} - "
-            f"{len(pacientes_criados)} criados, {len(pacientes_com_erro)} com erro"
+            f"{len(persistence_result['created_patients'])} pacientes e "
+            f"{persistence_result['created_responses']} respostas criados; "
+            f"{len(erros)} linhas inválidas"
         )
         
         # Retorna resultado
         return {
             "message": "Importação concluída",
-            "pacientes_criados": len(pacientes_criados),
-            "pacientes_com_erro": len(pacientes_com_erro),
-            "total_processado": len(pacientes_validados),
+            "pacientes_criados": len(persistence_result["created_patients"]),
+            "pacientes_reutilizados": persistence_result["reused_patients"],
+            "respostas_criadas": persistence_result["created_responses"],
+            "respostas_duplicadas": persistence_result["duplicate_responses"],
+            "pacientes_com_erro": len(erros),
+            "total_processado": len(pacientes_validados) + len(erros),
             "erros_validacao": erros,
-            "detalhes_criados": pacientes_criados,
-            "detalhes_erros": pacientes_com_erro
+            "detalhes_criados": persistence_result["created_patients"],
+            "detalhes_erros": detalhes_erros,
         }
         
     except HTTPException:
         raise
-    except Exception as e:
-        logger.error(f"Erro ao importar Excel: {str(e)}", exc_info=True)
+    except Exception:
+        db.rollback()
+        logger.error("Erro interno ao importar arquivo Excel")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Erro interno ao importar arquivo Excel"

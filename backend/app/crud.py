@@ -64,7 +64,8 @@ def get_user_by_username(db: Session, username: str) -> Optional[models.User]:
 def create_patient(
     db: Session, 
     patient: schemas.PatientCreate,
-    user_id: int
+    user_id: int,
+    commit: bool = True,
 ) -> models.Patient:
     """
     Cria um novo paciente no banco de dados.
@@ -84,8 +85,11 @@ def create_patient(
     )
     
     db.add(db_patient)
-    db.commit()
-    db.refresh(db_patient)
+    if commit:
+        db.commit()
+        db.refresh(db_patient)
+    else:
+        db.flush()
     return db_patient
 
 
@@ -289,7 +293,8 @@ def delete_form_draft(
 def create_form_response(
     db: Session, 
     form_response: schemas.FormResponseCreate,
-    user_id: int
+    user_id: int,
+    commit: bool = True,
 ) -> models.FormResponse:
     """
     Cria uma nova resposta de formulário.
@@ -322,8 +327,11 @@ def create_form_response(
         created_by_user_id=user_id
     )
     db.add(db_form_response)
-    db.commit()
-    db.refresh(db_form_response)
+    if commit:
+        db.commit()
+        db.refresh(db_form_response)
+    else:
+        db.flush()
     return db_form_response
 
 
