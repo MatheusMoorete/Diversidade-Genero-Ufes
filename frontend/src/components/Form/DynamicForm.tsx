@@ -14,6 +14,43 @@ interface DynamicFormProps {
     errors?: Record<string, string>;
 }
 
+interface FloatingSelectProps {
+    question: FormQuestion;
+    value: string;
+    error?: string;
+    onChange: (value: string) => void;
+}
+
+const FloatingSelect: React.FC<FloatingSelectProps> = ({ question, value, error, onChange }) => {
+    const [isFocused, setIsFocused] = useState(false);
+    const isFloating = isFocused || value !== '';
+
+    return (
+        <div className="input-floating w-full">
+            <div className="relative">
+                <select
+                    id={question.id}
+                    value={value}
+                    onFocus={() => setIsFocused(true)}
+                    onBlur={() => setIsFocused(false)}
+                    onChange={(event) => onChange(event.target.value)}
+                    className={`input w-full bg-white ${isFloating ? 'pt-6' : ''} ${error ? 'input-error' : ''}`}
+                >
+                    <option value=""></option>
+                    {question.options?.map((option) => <option key={option} value={option}>{option}</option>)}
+                </select>
+                <label
+                    htmlFor={question.id}
+                    className={`input-floating-label ${isFloating ? 'input-floating-label-floating' : ''} ${error ? 'text-red-500' : ''}`}
+                >
+                    {question.label}{question.required && <span className="ml-1 text-red-500">*</span>}
+                </label>
+            </div>
+            {error && <p className="mt-2 text-sm text-red-600">{error}</p>}
+        </div>
+    );
+};
+
 export const DynamicForm: React.FC<DynamicFormProps> = ({
     questionsData,
     formData,
@@ -344,37 +381,13 @@ export const DynamicForm: React.FC<DynamicFormProps> = ({
 
             case 'select':
                 return (
-                    <div key={question.id} className="w-full">
-                        <label className="block text-base font-medium text-gray-900 mb-2">
-                            {question.label}
-                            {question.required && <span className="text-red-500 ml-1">*</span>}
-                        </label>
-                        <select
-                            id={question.id}
-                            value={stringValue}
-                            onChange={(e) => handleChange(question.id, e.target.value)}
-                            className={`
-                                w-full px-4 py-3 border-2 border-gray-200 rounded-lg
-                                focus:border-[#4A6FA5] focus:outline-none focus:ring-4 focus:ring-blue-100
-                                bg-white transition-all
-                                text-gray-900
-                                ${error ? 'border-red-500 focus:border-red-500 focus:ring-red-100' : ''}
-              `}
-                        >
-                            <option value="">Selecione...</option>
-                            {question.options?.map((option) => (
-                                <option key={option} value={option}>
-                                    {option}
-                                </option>
-                            ))}
-                        </select>
-                        {error && <p className="mt-2 text-sm text-red-600 flex items-center gap-1">
-                            <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                                <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
-                            </svg>
-                            {error}
-                        </p>}
-                    </div>
+                    <FloatingSelect
+                        key={question.id}
+                        question={question}
+                        value={stringValue}
+                        error={error}
+                        onChange={(newValue) => handleChange(question.id, newValue)}
+                    />
                 );
 
             case 'multiselect':
