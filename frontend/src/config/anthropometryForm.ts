@@ -137,45 +137,21 @@ export const anthropometryQuestions: FormQuestionsData = {
     {
       id: 'mediana_additional', title: '14. Dados adicionais fornecidos pelo Mediana', questions: [
         ...[
-          ['ideal_weight', 'Peso ideal/desejável (kg)'], ['ideal_muscle_mass', 'Massa muscular ideal (kg)'], ['ideal_fat_mass', 'Massa gorda ideal (kg)'], ['weight_control', 'Controle de peso (kg)'], ['fat_control', 'Controle de gordura (kg)'], ['muscle_control', 'Controle de músculo (kg)'], ['mediana_score', 'Score Mediana'],
+          ['ideal_weight', 'Peso ideal/desejável (kg)'], ['ideal_muscle_mass', 'Massa muscular ideal (kg)'], ['ideal_fat_mass', 'Massa gorda ideal (kg)'],
         ].map(([id, label]) => ({ id, label, type: 'number' as const })),
       ],
     },
     {
-      id: 'trans_bioimpedance', title: '15. Bioimpedância nos homens trans', questions: [
-        { id: 'male_configuration_time', label: 'Avaliação A — configuração masculina (horário)', type: 'text', placeholder: 'HH:MM', conditional: { depends_on: 'participant_group', value: 'Homem trans' } },
-        { id: 'male_configuration_complete', label: 'Avaliação A — relatório completo', type: 'boolean', conditional: { depends_on: 'participant_group', value: 'Homem trans' } },
-        { id: 'female_configuration_time', label: 'Avaliação B — configuração feminina (horário)', type: 'text', placeholder: 'HH:MM', conditional: { depends_on: 'participant_group', value: 'Homem trans' } },
-        { id: 'female_configuration_complete', label: 'Avaliação B — relatório completo', type: 'boolean', conditional: { depends_on: 'participant_group', value: 'Homem trans' } },
-        { id: 'between_measurements_incident', label: 'Houve intercorrência entre as medidas?', type: 'radio', options: ['Não', 'Sim'], conditional: { depends_on: 'participant_group', value: 'Homem trans' } },
-        { id: 'between_measurements_incident_description', label: 'Se sim, descreva', type: 'textarea', conditional: { depends_on: 'between_measurements_incident', value: 'Sim' } },
-      ],
-    },
-    {
-      id: 'dynamometry', title: '16. Dinamometria manual', questions: [
-        { id: 'dynamometer_equipment', label: 'Equipamento', type: 'text' },
-        { id: 'dynamometer_model', label: 'Modelo', type: 'text', placeholder: 'NIX80' },
-        { id: 'dynamometer_serial', label: 'Número de série', type: 'text' },
-        { id: 'dynamometer_calibration', label: 'Situação da calibração', type: 'text' },
+      id: 'dynamometry',
+      title: '16. Dinamometria manual',
+      description: 'Posição: sentado, ombro aduzido, cotovelo a 90°, antebraço neutro e punho confortável. Ordem: mão dominante → não dominante. Três tentativas por mão, com 1 minuto de repouso. Usar o maior valor.',
+      questions: [
         { id: 'dominant_hand', label: 'Mão dominante', type: 'radio', options: ['Direita', 'Esquerda', 'Ambidestra'] },
         ...['Dominante', 'Não dominante'].flatMap((label, index) => {
           const id = index === 0 ? 'dominant' : 'non_dominant';
           return [1, 2, 3].map((attempt) => ({ id: `${id}_hand_attempt_${attempt}`, label: `${label} — ${attempt}ª tentativa (kg)`, type: 'number' as const, min: 0 }))
             .concat([{ id: `${id}_hand_max`, label: `${label} — maior valor (kg)`, type: 'number' as const, min: 0 }]);
         }),
-      ],
-    },
-    {
-      id: 'final_review', title: '17. Conferência final', questions: [
-        { id: 'all_steps_completed', label: 'Todas as etapas previstas foram realizadas?', type: 'radio', options: ['Sim', 'Não'] },
-        { id: 'missing_data', label: 'Há dados ausentes?', type: 'radio', options: ['Não', 'Sim'] },
-        { id: 'missing_variables', label: 'Variáveis ausentes', type: 'textarea', conditional: { depends_on: 'missing_data', value: 'Sim' } },
-        { id: 'missing_data_reason', label: 'Motivo dos dados ausentes', type: 'textarea', conditional: { depends_on: 'missing_data', value: 'Sim' } },
-        { id: 'collection_incident', label: 'Intercorrência durante a coleta?', type: 'radio', options: ['Não', 'Sim'] },
-        { id: 'collection_incident_description', label: 'Descrição da intercorrência', type: 'textarea', conditional: { depends_on: 'collection_incident', value: 'Sim' } },
-        { id: 'general_notes', label: 'Observações gerais', type: 'textarea' },
-        { id: 'reviewed_by', label: 'Responsável pela conferência', type: 'text' },
-        { id: 'review_date', label: 'Data da conferência', type: 'date' },
       ],
     },
   ],
