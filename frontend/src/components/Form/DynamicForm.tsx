@@ -48,6 +48,9 @@ export const DynamicForm: React.FC<DynamicFormProps> = ({
                                     calculated.bmi = Number((weight / Math.pow(height / 100, 2)).toFixed(2));
                                 }
                             }
+                            if (question.id === 'fat_free_mass' && localFormData.weight != null && localFormData.body_fat_mass != null) {
+                                calculated.fat_free_mass = Number((Number(localFormData.weight) - Number(localFormData.body_fat_mass)).toFixed(2));
+                            }
                         } catch (error) {
                             console.error(`Erro ao calcular ${question.id}:`, error);
                         }
@@ -81,16 +84,14 @@ export const DynamicForm: React.FC<DynamicFormProps> = ({
     const handleChange = (questionId: string, value: unknown) => {
         const newData = { ...localFormData, [questionId]: value };
 
-        // Atualiza valores calculados
-        const question = questionsData.sections
-            .flatMap((s) => s.questions)
-            .find((q) => q.id === questionId);
-
-        if (question?.calculated) {
-            const calculatedValue = calculatedValues[questionId];
-            if (calculatedValue != null) {
-                newData[questionId] = calculatedValue;
-            }
+        const weight = Number(newData.weight);
+        const height = Number(newData.height);
+        if (weight > 0 && height > 0) {
+            newData.bmi = Number((weight / Math.pow(height / 100, 2)).toFixed(2));
+        }
+        const bodyFatMass = Number(newData.body_fat_mass);
+        if (weight > 0 && bodyFatMass >= 0 && newData.body_fat_mass != null) {
+            newData.fat_free_mass = Number((weight - bodyFatMass).toFixed(2));
         }
 
         setLocalFormData(newData);
@@ -452,6 +453,7 @@ export const DynamicForm: React.FC<DynamicFormProps> = ({
                         max={question.max}
                         readOnly={question.readonly}
                         error={error}
+                        helperText={question.helper_text}
                         required={question.required}
                     />
                 );
@@ -510,7 +512,7 @@ export const DynamicForm: React.FC<DynamicFormProps> = ({
                         {section.title}
                     </h3>
                     {section.description && (
-                        <p className="rounded-lg border border-blue-100 bg-blue-50 px-4 py-3 text-sm leading-relaxed text-slate-600">
+                        <p className="text-sm leading-relaxed text-gray-500">
                             {section.description}
                         </p>
                     )}

@@ -53,13 +53,6 @@ export const anthropometryQuestions: FormQuestionsData = {
       ],
     },
     {
-      id: 'anthropometry', title: '6. Antropometria', questions: [
-        { id: 'weight', label: 'Peso — Mediana i20 (kg)', type: 'number', min: 0 },
-        { id: 'height', label: 'Altura — estadiômetro (cm)', type: 'number', min: 0 },
-        { id: 'bmi', label: 'IMC calculado (kg/m²)', type: 'number', readonly: true, calculated: { formula: 'weight / (height / 100)²', depends_on: ['weight', 'height'] } },
-      ],
-    },
-    {
       id: 'circumferences',
       title: '7. Circunferências',
       description: 'Fita antropométrica inelástica. Participante em ortostatismo. Fita horizontal e ajustada sem comprimir. Fazer 2 medidas; se a diferença for maior que 0,5 cm, fazer a 3ª e usar a média das duas medidas mais próximas.',
@@ -85,7 +78,6 @@ export const anthropometryQuestions: FormQuestionsData = {
       id: 'blood_pressure', title: '8. Pressão arterial', questions: [
         { id: 'systolic_pressure', label: 'PAS (mmHg)', type: 'number', min: 0 },
         { id: 'diastolic_pressure', label: 'PAD (mmHg)', type: 'number', min: 0 },
-        { id: 'blood_pressure_notes', label: 'Observação', type: 'textarea' },
       ],
     },
     {
@@ -94,25 +86,28 @@ export const anthropometryQuestions: FormQuestionsData = {
         { id: 'testosterone_type', label: 'Preparação/tipo', type: 'text', conditional: { depends_on: 'participant_group', value: 'Homem trans' } },
         { id: 'testosterone_route', label: 'Via', type: 'radio', options: ['Intramuscular', 'Subcutânea', 'Transdérmica'], allow_other: true, conditional: { depends_on: 'participant_group', value: 'Homem trans' } },
         { id: 'testosterone_dose', label: 'Dose', type: 'number', min: 0, conditional: { depends_on: 'participant_group', value: 'Homem trans' } },
-        { id: 'testosterone_unit', label: 'Unidade', type: 'text', conditional: { depends_on: 'participant_group', value: 'Homem trans' } },
         { id: 'testosterone_interval', label: 'Intervalo entre administrações (dias/semanas)', type: 'text', conditional: { depends_on: 'participant_group', value: 'Homem trans' } },
         { id: 'last_testosterone_dose', label: 'Data aproximada da última dose', type: 'date', conditional: { depends_on: 'participant_group', value: 'Homem trans' } },
         { id: 'hormone_therapy_notes', label: 'Observações', type: 'textarea', conditional: { depends_on: 'participant_group', value: 'Homem trans' } },
       ],
     },
     {
-      id: 'bioimpedance_checklist', title: '10. Bioimpedância — checklist pré-exame', questions: [
-        { id: 'bioimpedance_preparation', label: 'Condições confirmadas', type: 'checkbox', options: ['≥ 4 h sem alimentação', '≥ 4 h sem ingestão significativa de líquidos', 'Sem exercício vigoroso nas últimas 12 h', 'Sem álcool nas últimas 24 h', 'Bexiga esvaziada', 'Roupa leve e bolsos vazios', 'Descalço e sem meias', 'Objetos metálicos removidos', 'Cerca de 3 min em ortostatismo'] },
-        { id: 'bioimpedance_protocol_complete', label: 'Protocolo cumprido integralmente?', type: 'radio', options: ['Sim', 'Não'] },
-        { id: 'bioimpedance_protocol_deviation', label: 'Se não, desvio', type: 'textarea', conditional: { depends_on: 'bioimpedance_protocol_complete', value: 'Não' } },
-        { id: 'bioimpedance_time', label: 'Horário da bioimpedância', type: 'text', placeholder: 'HH:MM' },
-      ],
-    },
-    {
       id: 'body_composition', title: '11. Bioimpedância — composição corporal', questions: [
         { id: 'bioimpedance_configuration', label: 'Configuração utilizada', type: 'radio', options: ['Masculina', 'Feminina'] },
+        { id: 'weight', label: 'Peso (kg)', type: 'number', min: 0 },
+        { id: 'height', label: 'Altura (cm)', type: 'number', min: 0 },
+        { id: 'bmi', label: 'IMC calculado (kg/m²)', type: 'number', readonly: true, calculated: { formula: 'weight / (height / 100)²', depends_on: ['weight', 'height'] } },
         ...[
-          ['bio_weight', 'Peso (kg)'], ['bio_bmi', 'IMC (kg/m²)'], ['total_body_water_l', 'Água corporal total (L)'], ['total_body_water_percent', 'Água corporal total (%)'], ['protein_mass', 'Massa proteica (kg)'], ['mineral_mass', 'Massa mineral (kg)'], ['muscle_mass', 'Massa muscular (kg)'], ['skeletal_muscle_mass', 'Massa muscular esquelética (kg)'], ['fat_free_mass', 'Massa livre de gordura (kg)'], ['body_fat_mass', 'Massa gorda corporal (kg)'], ['body_fat_percent', 'Percentual de gordura corporal (%)'], ['extracellular_water_ratio', 'Relação de água extracelular'], ['visceral_fat_level', 'Nível de gordura visceral'], ['abdominal_fat_index', 'Índice de gordura abdominal'], ['obesity_degree', 'Grau de obesidade (%)'], ['basal_metabolic_rate', 'Taxa metabólica basal (kcal)'], ['total_energy_expenditure', 'Gasto energético total (kcal)'],
+          ['total_body_water_l', 'Água corporal total (L)'], ['total_body_water_percent', 'Água corporal total (%)'], ['protein_mass', 'Massa proteica (kg)'], ['mineral_mass', 'Massa mineral (kg)'], ['muscle_mass', 'Massa muscular (kg)'], ['skeletal_muscle_mass', 'Massa muscular esquelética (kg)'],
+        ].map(([id, label]) => ({ id, label, type: 'number' as const, min: 0 })),
+        { id: 'body_fat_mass', label: 'Massa gorda corporal (kg)', type: 'number', min: 0 },
+        { id: 'fat_free_mass', label: 'Massa livre corporal (kg)', type: 'number', min: 0, readonly: true, calculated: { formula: 'weight - body_fat_mass', depends_on: ['weight', 'body_fat_mass'] } },
+        ...[
+          ['body_fat_percent', 'Percentual de gordura corporal (%)'],
+        ].map(([id, label]) => ({ id, label, type: 'number' as const, min: 0 })),
+        { id: 'visceral_fat_level', label: 'Nível de gordura visceral', type: 'select', options: ['Baixo', 'Alto', 'Muito alto'] },
+        ...[
+          ['abdominal_fat_index', 'Índice de gordura abdominal'], ['obesity_degree', 'Grau de obesidade (%)'], ['basal_metabolic_rate', 'Taxa metabólica basal (kcal)'], ['total_energy_expenditure', 'Gasto energético total (kcal)'],
         ].map(([id, label]) => ({ id, label, type: 'number' as const, min: 0 })),
       ],
     },
@@ -125,9 +120,6 @@ export const anthropometryQuestions: FormQuestionsData = {
             { id: `${id}_fat_mass`, label: `${label} — massa gorda (kg)`, type: 'number' as const, min: 0 },
           ];
         }),
-        { id: 'upper_balance', label: 'Equilíbrio superior', type: 'text' },
-        { id: 'lower_balance', label: 'Equilíbrio inferior', type: 'text' },
-        { id: 'body_balance_classification', label: 'Classificação/equilíbrio corporal do aparelho', type: 'text' },
       ],
     },
     {
