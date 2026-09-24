@@ -14,6 +14,7 @@ export interface FormQuestion {
   max_length?: number;
   pattern?: string;
   input_mode?: 'numeric' | 'decimal';
+  helper_text?: string;
   readonly?: boolean;
   allow_other?: boolean;
   conditional?: {
@@ -30,6 +31,7 @@ export interface FormQuestion {
 export interface FormSection {
   id: string;
   title: string;
+  description?: string;
   questions: FormQuestion[];
 }
 
@@ -41,4 +43,3 @@ export interface FormQuestionsData {
   description?: string;
   sections: FormSection[];
 }
-

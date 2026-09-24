@@ -60,14 +60,22 @@ export const anthropometryQuestions: FormQuestionsData = {
       ],
     },
     {
-      id: 'circumferences', title: '7. Circunferências', questions: [
+      id: 'circumferences',
+      title: '7. Circunferências',
+      description: 'Fita antropométrica inelástica. Participante em ortostatismo. Fita horizontal e ajustada sem comprimir. Fazer 2 medidas; se a diferença for maior que 0,5 cm, fazer a 3ª e usar a média das duas medidas mais próximas.',
+      questions: [
         ...['Cervical', 'Cintura/abdominal', 'Quadril'].flatMap((label, index) => {
           const id = ['neck', 'waist', 'hip'][index];
+          const guidelines = [
+            'Diretriz: cabeça neutra/plano de Frankfurt; fita horizontal ao nível da região cricotireóidea.',
+            'Diretriz: ponto médio entre a margem inferior da última costela palpável e a borda superior da crista ilíaca; leitura ao final de expiração normal.',
+            'Diretriz: maior circunferência das nádegas.',
+          ];
           return [
             { id: `${id}_circumference_1`, label: `${label} — 1ª medida (cm)`, type: 'number' as const, min: 0 },
             { id: `${id}_circumference_2`, label: `${label} — 2ª medida (cm)`, type: 'number' as const, min: 0 },
             { id: `${id}_circumference_3`, label: `${label} — 3ª medida, se necessária (cm)`, type: 'number' as const, min: 0 },
-            { id: `${id}_circumference_final`, label: `${label} — valor final (cm)`, type: 'number' as const, min: 0 },
+            { id: `${id}_circumference_final`, label: `${label} — valor final (cm)`, type: 'number' as const, min: 0, helper_text: guidelines[index] },
           ];
         }),
         { id: 'waist_hip_ratio', label: 'RCQ (cintura ÷ quadril)', type: 'number', min: 0 },

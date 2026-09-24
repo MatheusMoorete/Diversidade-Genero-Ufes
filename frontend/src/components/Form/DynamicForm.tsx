@@ -494,6 +494,7 @@ export const DynamicForm: React.FC<DynamicFormProps> = ({
                         maxLength={question.max_length}
                         pattern={question.pattern}
                         inputMode={question.input_mode}
+                        helperText={question.helper_text}
                         error={error}
                         required={question.required}
                     />
@@ -508,6 +509,11 @@ export const DynamicForm: React.FC<DynamicFormProps> = ({
                     <h3 className="text-xl font-semibold text-gray-800 border-b border-gray-200 pb-2">
                         {section.title}
                     </h3>
+                    {section.description && (
+                        <p className="rounded-lg border border-blue-100 bg-blue-50 px-4 py-3 text-sm leading-relaxed text-slate-600">
+                            {section.description}
+                        </p>
+                    )}
                     <div className="space-y-6">
                         {section.questions.map((question) => renderQuestion(question))}
                     </div>
