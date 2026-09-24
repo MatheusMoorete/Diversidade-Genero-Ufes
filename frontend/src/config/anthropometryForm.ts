@@ -54,7 +54,7 @@ export const anthropometryQuestions: FormQuestionsData = {
     },
     {
       id: 'circumferences',
-      title: '7. Circunferências',
+      title: '6. Circunferências',
       description: 'Fita antropométrica inelástica. Participante em ortostatismo. Fita horizontal e ajustada sem comprimir. Fazer 2 medidas; se a diferença for maior que 0,5 cm, fazer a 3ª e usar a média das duas medidas mais próximas.',
       questions: [
         ...['Cervical', 'Cintura/abdominal', 'Quadril'].flatMap((label, index) => {
@@ -65,9 +65,9 @@ export const anthropometryQuestions: FormQuestionsData = {
             'Diretriz: maior circunferência das nádegas.',
           ];
           return [
-            { id: `${id}_circumference_1`, label: `${label} — 1ª medida (cm)`, type: 'number' as const, min: 0 },
-            { id: `${id}_circumference_2`, label: `${label} — 2ª medida (cm)`, type: 'number' as const, min: 0 },
-            { id: `${id}_circumference_3`, label: `${label} — 3ª medida, se necessária (cm)`, type: 'number' as const, min: 0 },
+            { id: `${id}_circumference_1`, label: `${label} — 1ª medida (cm)`, type: 'number' as const, min: 0, helper_text: guidelines[index] },
+            { id: `${id}_circumference_2`, label: `${label} — 2ª medida (cm)`, type: 'number' as const, min: 0, helper_text: guidelines[index] },
+            { id: `${id}_circumference_3`, label: `${label} — 3ª medida, se necessária (cm)`, type: 'number' as const, min: 0, helper_text: guidelines[index] },
             { id: `${id}_circumference_final`, label: `${label} — valor final (cm)`, type: 'number' as const, min: 0, helper_text: guidelines[index] },
           ];
         }),
@@ -75,13 +75,13 @@ export const anthropometryQuestions: FormQuestionsData = {
       ],
     },
     {
-      id: 'blood_pressure', title: '8. Pressão arterial', questions: [
+      id: 'blood_pressure', title: '7. Pressão arterial', questions: [
         { id: 'systolic_pressure', label: 'PAS (mmHg)', type: 'number', min: 0 },
         { id: 'diastolic_pressure', label: 'PAD (mmHg)', type: 'number', min: 0 },
       ],
     },
     {
-      id: 'hormone_therapy', title: '9. Hormonioterapia — somente homens trans', questions: [
+      id: 'hormone_therapy', title: '8. Hormonioterapia — somente homens trans', questions: [
         { id: 'testosterone_months', label: 'Tempo total de uso de testosterona (meses)', type: 'number', min: 0, conditional: { depends_on: 'participant_group', value: 'Homem trans' } },
         { id: 'testosterone_type', label: 'Preparação/tipo', type: 'text', conditional: { depends_on: 'participant_group', value: 'Homem trans' } },
         { id: 'testosterone_route', label: 'Via', type: 'radio', options: ['Intramuscular', 'Subcutânea', 'Transdérmica'], allow_other: true, conditional: { depends_on: 'participant_group', value: 'Homem trans' } },
@@ -92,7 +92,7 @@ export const anthropometryQuestions: FormQuestionsData = {
       ],
     },
     {
-      id: 'body_composition', title: '11. Bioimpedância — composição corporal', questions: [
+      id: 'body_composition', title: '9. Bioimpedância — composição corporal', questions: [
         { id: 'bioimpedance_configuration', label: 'Configuração utilizada', type: 'radio', options: ['Masculina', 'Feminina'] },
         { id: 'weight', label: 'Peso (kg)', type: 'number', min: 0 },
         { id: 'height', label: 'Altura (cm)', type: 'number', min: 0 },
@@ -112,7 +112,7 @@ export const anthropometryQuestions: FormQuestionsData = {
       ],
     },
     {
-      id: 'segmental_analysis', title: '12. Análise segmentar', questions: [
+      id: 'segmental_analysis', title: '10. Análise segmentar', questions: [
         ...['Braço esquerdo', 'Braço direito', 'Tronco', 'Perna esquerda', 'Perna direita'].flatMap((label, index) => {
           const id = ['left_arm', 'right_arm', 'trunk', 'left_leg', 'right_leg'][index];
           return [
@@ -123,7 +123,7 @@ export const anthropometryQuestions: FormQuestionsData = {
       ],
     },
     {
-      id: 'segmental_impedance', title: '13. Impedância segmentar', questions: [
+      id: 'segmental_impedance', title: '11. Impedância segmentar', questions: [
         ...['10 kHz', '100 kHz'].flatMap((frequency) =>
           [['la', 'Braço E.'], ['ra', 'Braço D.'], ['tr', 'Tronco'], ['ll', 'Perna E.'], ['rl', 'Perna D.']].map(([segment, label]) => ({
             id: `impedance_${frequency.startsWith('10 ') ? '10' : '100'}_${segment}`,
@@ -135,7 +135,7 @@ export const anthropometryQuestions: FormQuestionsData = {
       ],
     },
     {
-      id: 'mediana_additional', title: '14. Dados adicionais fornecidos pelo Mediana', questions: [
+      id: 'mediana_additional', title: '12. Dados adicionais fornecidos pelo Mediana', questions: [
         ...[
           ['ideal_weight', 'Peso ideal/desejável (kg)'], ['ideal_muscle_mass', 'Massa muscular ideal (kg)'], ['ideal_fat_mass', 'Massa gorda ideal (kg)'],
         ].map(([id, label]) => ({ id, label, type: 'number' as const })),
@@ -143,7 +143,7 @@ export const anthropometryQuestions: FormQuestionsData = {
     },
     {
       id: 'dynamometry',
-      title: '16. Dinamometria manual',
+      title: '13. Dinamometria manual',
       description: 'Posição: sentado, ombro aduzido, cotovelo a 90°, antebraço neutro e punho confortável. Ordem: mão dominante → não dominante. Três tentativas por mão, com 1 minuto de repouso. Usar o maior valor.',
       questions: [
         { id: 'dominant_hand', label: 'Mão dominante', type: 'radio', options: ['Direita', 'Esquerda', 'Ambidestra'] },

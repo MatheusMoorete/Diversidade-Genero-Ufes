@@ -98,7 +98,11 @@ export const FloatingLabelInput: React.FC<FloatingLabelInputProps> = ({
         </p>
       )}
       {helperText && !error && (
-        <p className="mt-2 text-sm text-gray-500">{helperText}</p>
+        <p className="mt-2 text-sm text-gray-500">
+          {helperText.startsWith('Diretriz:') ? (
+            <><strong className="font-semibold text-gray-700">Diretriz:</strong>{helperText.slice('Diretriz:'.length)}</>
+          ) : helperText}
+        </p>
       )}
     </div>
   );

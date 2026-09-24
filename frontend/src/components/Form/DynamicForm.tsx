@@ -508,14 +508,16 @@ export const DynamicForm: React.FC<DynamicFormProps> = ({
         <div className="space-y-8">
             {questionsData.sections.map((section: FormSection) => (
                 <div key={section.id} className="space-y-6">
-                    <h3 className="text-xl font-semibold text-gray-800 border-b border-gray-200 pb-2">
-                        {section.title}
-                    </h3>
-                    {section.description && (
-                        <p className="text-sm leading-relaxed text-gray-500">
-                            {section.description}
-                        </p>
-                    )}
+                    <div>
+                        <h3 className="text-xl font-semibold text-gray-800 border-b border-gray-200 pb-2">
+                            {section.title}
+                        </h3>
+                        {section.description && (
+                            <p className="mt-1 text-sm leading-relaxed text-gray-500">
+                                {section.description}
+                            </p>
+                        )}
+                    </div>
                     <div className="space-y-6">
                         {section.questions.map((question) => renderQuestion(question))}
                     </div>
