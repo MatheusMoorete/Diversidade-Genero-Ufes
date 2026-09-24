@@ -106,3 +106,20 @@ class FormDraft(Base):
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
 
     created_by = relationship("User", back_populates="form_drafts")
+
+
+class AnthropometryRecord(Base):
+    """Coleta da pesquisa de antropometria, isolada do cadastro assistencial."""
+    __tablename__ = "anthropometry_records"
+    __table_args__ = (
+        UniqueConstraint("participant_id", name="uq_anthropometry_participant"),
+    )
+
+    id = Column(Integer, primary_key=True, index=True)
+    participant_id = Column(String(3), nullable=False)
+    full_name = Column(String(255), nullable=False)
+    age = Column(Integer, nullable=False)
+    form_data = Column(JSON, nullable=False)
+    created_by_user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), onupdate=func.now(), nullable=True)

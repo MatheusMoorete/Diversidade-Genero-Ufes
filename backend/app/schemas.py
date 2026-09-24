@@ -181,6 +181,22 @@ class FormResponseResponse(FormResponseBase):
         from_attributes = True
 
 
+class AnthropometryRecordCreate(BaseModel):
+    participant_id: str = Field(..., pattern=r"^(?:00[1-9]|0[1-9][0-9]|100)$")
+    full_name: str = Field(..., min_length=1, max_length=255)
+    age: int = Field(..., ge=18, le=60)
+    form_data: Dict[str, Any]
+
+
+class AnthropometryRecordResponse(AnthropometryRecordCreate):
+    id: int
+    created_by_user_id: int
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
 # Schemas para Autenticação
 class FormDraftPayload(BaseModel):
     """Payload de rascunho de consulta em andamento."""

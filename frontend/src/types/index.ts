@@ -116,6 +116,19 @@ export interface FormResponseCreate {
   next_return_date?: string | null;
 }
 
+export interface AnthropometryRecordCreate {
+  participant_id: string;
+  full_name: string;
+  age: number;
+  form_data: Record<string, unknown>;
+}
+
+export interface AnthropometryRecord extends AnthropometryRecordCreate {
+  id: number;
+  created_by_user_id: number;
+  created_at: string;
+}
+
 export interface ConsultationDraftPayload {
   draft_key?: 'consultation';
   is_creating_new_patient: boolean;

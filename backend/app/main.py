@@ -30,7 +30,7 @@ from app.config import (
 )
 
 # Importa routers
-from app.routers import auth, patients, forms, excel, backup
+from app.routers import auth, patients, forms, excel, backup, anthropometry
 
 # Configuração de logging
 logging.basicConfig(
@@ -145,6 +145,7 @@ app.include_router(patients.router)
 app.include_router(forms.router)
 # Forms questions router
 app.include_router(forms.forms_questions_router)
+app.include_router(anthropometry.router)
 
 # Excel router
 app.include_router(excel.router)

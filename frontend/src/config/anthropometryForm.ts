@@ -10,21 +10,14 @@ export const anthropometryQuestions: FormQuestionsData = {
   sections: [
     {
       id: 'collection', title: 'Identificação da coleta', questions: [
-        { id: 'patient_name', label: 'Nome completo do paciente (somente para novo cadastro)', type: 'text' },
-        { id: 'participant_id', label: 'ID do participante', type: 'text' },
-        { id: 'collection_date', label: 'Data da coleta', type: 'date', required: true },
-        { id: 'collection_time', label: 'Horário da coleta', type: 'text', placeholder: 'HH:MM' },
-        { id: 'responsible_researcher', label: 'Pesquisador responsável', type: 'text' },
+        { id: 'patient_name', label: 'Nome completo', type: 'text', required: true },
+        { id: 'participant_id', label: 'ID do participante (001 a 100)', type: 'text', required: true, max_length: 3, pattern: '(?:00[1-9]|0[1-9][0-9]|100)', input_mode: 'numeric' },
       ],
     },
     {
       id: 'screening', title: '1. Triagem e elegibilidade', questions: [
         { id: 'participant_group', label: 'Grupo', type: 'radio', options: ['Homem trans', 'Mulher cisgênero'], required: true },
-        { id: 'age', label: 'Idade (anos)', type: 'number', min: 18, max: 120 },
-        { id: 'eligibility_criteria', label: 'Critérios confirmados', type: 'checkbox', options: ['18–40 anos', 'Identidade de gênero compatível com o grupo', 'Testosterona há 6 meses ou mais (homem trans)', 'Sem testosterona/esteroides anabolizantes (mulher cisgênero)', 'Vínculo/recrutamento no ambulatório', 'TCLE assinado'] },
-        { id: 'exclusion_criteria', label: 'Critérios de exclusão identificados', type: 'checkbox', options: ['Gestação atual', 'Puerpério recente', 'Uso atual de esteroides anabolizantes não prescritos', 'Medicamento com impacto importante sobre composição corporal', 'Doença aguda', 'Condição que impeça medidas seguras', 'Recusa/impossibilidade de assinatura do TCLE'] },
-        { id: 'eligible_participant', label: 'Participante elegível?', type: 'radio', options: ['Sim', 'Não'], required: true },
-        { id: 'ineligibility_reason', label: 'Se não, motivo', type: 'textarea', conditional: { depends_on: 'eligible_participant', value: 'Não' } },
+        { id: 'age', label: 'Idade (anos)', type: 'text', required: true, max_length: 2, pattern: '(?:1[89]|[2-5][0-9]|60)', input_mode: 'numeric' },
       ],
     },
     {
@@ -61,7 +54,6 @@ export const anthropometryQuestions: FormQuestionsData = {
     },
     {
       id: 'anthropometry', title: '6. Antropometria', questions: [
-        { id: 'measurement_conditions', label: 'Condições da medida', type: 'checkbox', options: ['Com roupa', 'Descalço', 'Bolsos vazios'] },
         { id: 'weight', label: 'Peso — Mediana i20 (kg)', type: 'number', min: 0 },
         { id: 'height', label: 'Altura — estadiômetro (cm)', type: 'number', min: 0 },
         { id: 'bmi', label: 'IMC calculado (kg/m²)', type: 'number', readonly: true, calculated: { formula: 'weight / (height / 100)²', depends_on: ['weight', 'height'] } },

@@ -12,7 +12,7 @@ import { SearchInput } from '@/components/PatientSearch/SearchInput';
 import { FloatingLabelInput } from '@/components/shared/FloatingLabelInput';
 import { Button } from '@/components/shared/Button';
 import { DynamicForm } from '@/components/Form/DynamicForm';
-import { patientService, formService, formQuestionsService } from '@/services/api';
+import { anthropometryService, patientService, formService, formQuestionsService, getApiErrorMessage } from '@/services/api';
 import { useAuth } from '@/hooks/useAuth';
 import { useFormQuestionsCache } from '@/hooks/useFormQuestionsCache';
 import { useToast } from '@/hooks/useToast';
@@ -310,6 +310,18 @@ export const FormPage: React.FC = () => {
     }
   });
 
+  const createAnthropometryMutation = useMutation({
+    mutationFn: anthropometryService.create,
+    onSuccess: () => {
+      setFormData({ _form_type: ANTHROPOMETRY_FORM_TYPE });
+      clearConsultationDraft();
+      showToast('Coleta de antropometria salva com sucesso!', 'success');
+    },
+    onError: (error) => {
+      showToast(getApiErrorMessage(error, 'Erro ao salvar a coleta.'), 'error');
+    },
+  });
+
   // Inicia criação de novo paciente
   const handleStartNewPatient = () => {
     if (availableDraft && !window.confirm('Existe um rascunho salvo. Começar outro formulário sem restaurar vai substituir esse rascunho. Continuar?')) {
@@ -339,6 +351,33 @@ export const FormPage: React.FC = () => {
     e.preventDefault();
 
     try {
+      if (formType === 'anthropometry') {
+        const participantId = String(formData.participant_id ?? '');
+        const fullName = String(formData.patient_name ?? '').trim();
+        const age = Number(formData.age);
+
+        if (!/^(?:00[1-9]|0[1-9][0-9]|100)$/.test(participantId)) {
+          showToast('O ID deve estar entre 001 e 100.', 'warning');
+          return;
+        }
+        if (!fullName) {
+          showToast('O nome completo é obrigatório.', 'warning');
+          return;
+        }
+        if (!Number.isInteger(age) || age < 18 || age > 60) {
+          showToast('A idade deve estar entre 18 e 60 anos.', 'warning');
+          return;
+        }
+
+        createAnthropometryMutation.mutate({
+          participant_id: participantId,
+          full_name: fullName,
+          age,
+          form_data: formData,
+        });
+        return;
+      }
+
       let patientId: number;
       let patientName: string;
 
@@ -389,7 +428,7 @@ export const FormPage: React.FC = () => {
   };
 
   // Determina se deve mostrar o formulário completo
-  const showFullForm = isCreatingNewPatient || selectedPatient;
+  const showFullForm = formType === 'anthropometry' || isCreatingNewPatient || selectedPatient;
 
   if (!formType) {
     return (
@@ -513,13 +552,13 @@ export const FormPage: React.FC = () => {
 
         <form onSubmit={handleSubmitForm} className="space-y-8">
           {/* Seção: Buscar/Criar Paciente - só aparece se NÃO estiver criando novo */}
-          {!isCreatingNewPatient && (
+          {formType === 'standard' && !isCreatingNewPatient && (
             <div className="space-y-6">
               {/* Campo de busca melhorado */}
               <SearchInput
                 onSelectPatient={(patient) => {
                   setSelectedPatient(patient);
-                  setFormData(formType === 'anthropometry' ? { _form_type: ANTHROPOMETRY_FORM_TYPE } : {});
+                  setFormData({});
                 }}
                 navigateOnClick={true}
                 placeholder="Buscar paciente"
@@ -578,7 +617,7 @@ export const FormPage: React.FC = () => {
                         type="button"
                         onClick={() => {
                           setSelectedPatient(null);
-                          setFormData(formType === 'anthropometry' ? { _form_type: ANTHROPOMETRY_FORM_TYPE } : {});
+                          setFormData({});
                         }}
                         className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
                         title="Remover seleção"
@@ -644,11 +683,11 @@ export const FormPage: React.FC = () => {
                       type="submit"
                       variant="primary"
                       size="lg"
-                      isLoading={createFormMutation.isPending || createPatientMutation.isPending}
+                      isLoading={createFormMutation.isPending || createPatientMutation.isPending || createAnthropometryMutation.isPending}
                       className={`w-full ${isCreatingNewPatient ? 'bg-[#64748B] hover:bg-[#64748B]/90' : ''}`}
                       style={isCreatingNewPatient ? { background: '#64748B' } : { background: 'linear-gradient(90deg, #3B5F8A, #4A6FA5)' }}
                     >
-                      {isCreatingNewPatient ? 'Cadastrar Paciente' : 'Salvar Formulário'}
+                      {formType === 'anthropometry' ? 'Salvar Antropometria' : isCreatingNewPatient ? 'Cadastrar Paciente' : 'Salvar Formulário'}
                     </Button>
                   </div>
                 </>

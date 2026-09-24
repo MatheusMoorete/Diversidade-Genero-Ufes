@@ -5,6 +5,8 @@
 import axios, { AxiosError, AxiosInstance, AxiosRequestConfig } from 'axios';
 import type {
   ApiError,
+  AnthropometryRecord,
+  AnthropometryRecordCreate,
   ConsultationDraft,
   ConsultationDraftPayload,
   FormQuestionCreatePayload,
@@ -217,6 +219,13 @@ export const formService = {
     await api.delete('/api/form-responses/drafts/consultation', {
       skipUnauthorizedHandler: true,
     } as ApiRequestConfig);
+  },
+};
+
+export const anthropometryService = {
+  async create(data: AnthropometryRecordCreate): Promise<AnthropometryRecord> {
+    const response = await api.post<AnthropometryRecord>('/api/anthropometry', data);
+    return response.data;
   },
 };
 

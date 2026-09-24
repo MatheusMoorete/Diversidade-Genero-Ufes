@@ -491,6 +491,9 @@ export const DynamicForm: React.FC<DynamicFormProps> = ({
                         value={stringValue}
                         onChange={(e) => handleChange(question.id, e.target.value)}
                         placeholder={question.placeholder}
+                        maxLength={question.max_length}
+                        pattern={question.pattern}
+                        inputMode={question.input_mode}
                         error={error}
                         required={question.required}
                     />
@@ -513,4 +516,3 @@ export const DynamicForm: React.FC<DynamicFormProps> = ({
         </div>
     );
 };
-
