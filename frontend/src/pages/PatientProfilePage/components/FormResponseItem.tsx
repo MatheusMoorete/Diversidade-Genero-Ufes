@@ -6,6 +6,7 @@ import { DynamicForm } from '@/components/Form/DynamicForm';
 import { DataSection } from './DataSection';
 import { FullFormView } from './FullFormView';
 import { FIELD_CATEGORIES } from '../constants';
+import { ANTHROPOMETRY_FORM_TYPE, anthropometryQuestions } from '@/config/anthropometryForm';
 import type { FormResponse, FormQuestionsData, FormResponseUpdate } from '@/types';
 
 interface FormResponseItemProps {
@@ -39,6 +40,8 @@ export const FormResponseItem: React.FC<FormResponseItemProps> = ({
     const [nextReturnDate, setNextReturnDate] = useState(
         formResponse.next_return_date ? format(new Date(formResponse.next_return_date), "yyyy-MM-dd") : ''
     );
+    const isAnthropometry = formResponse.form_data?._form_type === ANTHROPOMETRY_FORM_TYPE;
+    const activeQuestionsData = isAnthropometry ? anthropometryQuestions : questionsData;
 
     const handleStartEdit = () => {
         setEditFormData(formResponse.form_data || {});
@@ -112,10 +115,10 @@ export const FormResponseItem: React.FC<FormResponseItemProps> = ({
                             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#4A6FA5] mx-auto mb-4"></div>
                             <p className="text-gray-500 text-sm">Carregando estrutura do formulário...</p>
                         </div>
-                    ) : questionsData ? (
+                    ) : activeQuestionsData ? (
                         <>
                             <DynamicForm
-                                questionsData={questionsData}
+                                questionsData={activeQuestionsData}
                                 formData={editFormData}
                                 onChange={setEditFormData}
                             />
@@ -161,9 +164,13 @@ export const FormResponseItem: React.FC<FormResponseItemProps> = ({
                                         🔄 {format(new Date(formResponse.next_return_date), "dd/MM/yyyy")}
                                     </span>
                                 )}
-                                <span className={`flex items-center gap-1 ${formResponse.uses_hormone_over_1year ? 'text-green-600 font-medium' : ''}`}>
-                                    {formResponse.uses_hormone_over_1year ? '✓ Hormônio +1a' : '○ Hormônio <1a'}
-                                </span>
+                                {isAnthropometry ? (
+                                    <span className="flex items-center gap-1 font-medium text-emerald-700">Antropometria</span>
+                                ) : (
+                                    <span className={`flex items-center gap-1 ${formResponse.uses_hormone_over_1year ? 'text-green-600 font-medium' : ''}`}>
+                                        {formResponse.uses_hormone_over_1year ? '✓ Hormônio +1a' : '○ Hormônio &lt;1a'}
+                                    </span>
+                                )}
                             </div>
                         </div>
                     </div>
@@ -182,7 +189,7 @@ export const FormResponseItem: React.FC<FormResponseItemProps> = ({
 
             {/* Conteúdo dependente do ViewMode */}
             {formResponse.form_data && Object.keys(formResponse.form_data).length > 0 ? (
-                viewMode === 'categorized' ? (
+                viewMode === 'categorized' && !isAnthropometry ? (
                     <div className="p-6 md:p-8 space-y-6">
                         {Object.entries(FIELD_CATEGORIES).map(([key, category]) => (
                             <DataSection
@@ -199,8 +206,8 @@ export const FormResponseItem: React.FC<FormResponseItemProps> = ({
                 ) : (
                     <FullFormView
                         data={formResponse.form_data as Record<string, unknown>}
-                        questionsData={questionsData}
-                        additionalQuestionsData={additionalQuestionsData}
+                        questionsData={activeQuestionsData}
+                        additionalQuestionsData={isAnthropometry ? undefined : additionalQuestionsData}
                     />
                 )
             ) : (

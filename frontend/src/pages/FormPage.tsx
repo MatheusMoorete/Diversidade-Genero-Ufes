@@ -7,6 +7,7 @@ import React, { useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
 import { queryKeys } from '@/config/queryKeys';
+import { ANTHROPOMETRY_FORM_TYPE, anthropometryQuestions } from '@/config/anthropometryForm';
 import { SearchInput } from '@/components/PatientSearch/SearchInput';
 import { FloatingLabelInput } from '@/components/shared/FloatingLabelInput';
 import { Button } from '@/components/shared/Button';
@@ -35,6 +36,7 @@ export const FormPage: React.FC = () => {
   const [availableDraft, setAvailableDraft] = useState<ConsultationDraft | null>(null);
   const [lastDraftSavedAt, setLastDraftSavedAt] = useState<string | null>(null);
   const [isDraftLoadComplete, setIsDraftLoadComplete] = useState(false);
+  const [formType, setFormType] = useState<'standard' | 'anthropometry' | null>(null);
   const queryClient = useQueryClient();
   const { showToast } = useToast();
   const selectedPatientIdFromUrl = searchParams.get('patientId');
@@ -136,7 +138,7 @@ export const FormPage: React.FC = () => {
   // Combina formulários se for primeira vez
   // Se for primeira vez: combina ambos os formulários (padrão + adicional)
   // Se for retorno: mostra apenas o formulário adicional
-  const questionsData: FormQuestionsData | null = isFirstTime
+  const standardFormQuestions: FormQuestionsData | null = isFirstTime
     ? (standardQuestionsData && additionalQuestionsData
       ? {
         version: `${standardQuestionsData.version}+${additionalQuestionsData.version}`,
@@ -146,9 +148,11 @@ export const FormPage: React.FC = () => {
       : standardQuestionsData || null) // Fallback: mostra padrão se adicional ainda não carregou
     : returnQuestionsData || null; // Retorno: apenas adicional relevante
 
-  const isLoadingQuestions = (isFirstTime && isLoadingStandardQuestions) ||
+  const questionsData = formType === 'anthropometry' ? anthropometryQuestions : standardFormQuestions;
+
+  const isLoadingQuestions = formType !== 'anthropometry' && ((isFirstTime && isLoadingStandardQuestions) ||
     (isFirstTime && isLoadingAdditionalQuestions) ||
-    (!isFirstTime && isLoadingAdditionalQuestions);
+    (!isFirstTime && isLoadingAdditionalQuestions));
 
   const draftStorageKey = user ? getConsultationDraftKey(user.id) : null;
   const questionsVersion = questionsData?.version ?? null;
@@ -176,6 +180,7 @@ export const FormPage: React.FC = () => {
   }, [draftStorageKey]);
 
   const restoreConsultationDraft = (draft: ConsultationDraft) => {
+    setFormType(draft.form_data?._form_type === ANTHROPOMETRY_FORM_TYPE ? 'anthropometry' : 'standard');
     setIsCreatingNewPatient(draft.is_creating_new_patient);
     setSelectedPatient(draft.selected_patient ?? null);
     setFormData(draft.form_data ?? {});
@@ -295,7 +300,7 @@ export const FormPage: React.FC = () => {
       // Limpa formulário
       setSelectedPatient(null);
       setNextReturnDate('');
-      setFormData({});
+      setFormData(formType === 'anthropometry' ? { _form_type: ANTHROPOMETRY_FORM_TYPE } : {});
       setIsCreatingNewPatient(false);
       clearConsultationDraft();
       showToast('Formulário salvo com sucesso!', 'success');
@@ -313,16 +318,21 @@ export const FormPage: React.FC = () => {
     setAvailableDraft(null);
     setIsCreatingNewPatient(true);
     setSelectedPatient(null);
-    setFormData({});
+    setFormData(formType === 'anthropometry' ? { _form_type: ANTHROPOMETRY_FORM_TYPE } : {});
     setNextReturnDate('');
   };
 
   // Cancela criação de novo paciente
   const handleCancelNewPatient = () => {
     setIsCreatingNewPatient(false);
-    setFormData({});
+    setFormData(formType === 'anthropometry' ? { _form_type: ANTHROPOMETRY_FORM_TYPE } : {});
     setNextReturnDate('');
     clearConsultationDraft();
+  };
+
+  const selectFormType = (type: 'standard' | 'anthropometry') => {
+    setFormType(type);
+    setFormData(type === 'anthropometry' ? { _form_type: ANTHROPOMETRY_FORM_TYPE } : {});
   };
 
   const handleSubmitForm = async (e: React.FormEvent) => {
@@ -381,12 +391,70 @@ export const FormPage: React.FC = () => {
   // Determina se deve mostrar o formulário completo
   const showFullForm = isCreatingNewPatient || selectedPatient;
 
+  if (!formType) {
+    return (
+      <main className="min-h-screen bg-[#f4f6fb] px-5 py-12 sm:px-8 lg:py-20">
+        <div className="mx-auto max-w-5xl">
+          <header className="mb-12">
+            <p className="mb-3 text-sm font-semibold uppercase tracking-[0.18em] text-[#4A6FA5]">Coleta de dados</p>
+            <h1 className="text-4xl font-bold tracking-tight text-slate-900 sm:text-5xl">Novo formulário</h1>
+            <p className="mt-4 text-lg text-slate-500">Escolha o tipo de formulário que deseja preencher</p>
+          </header>
+
+          <div className="grid gap-6 md:grid-cols-2">
+            <button
+              type="button"
+              onClick={() => selectFormType('standard')}
+              className="group flex min-h-72 flex-col rounded-2xl border border-slate-200 bg-white p-8 text-left shadow-sm transition hover:-translate-y-1 hover:border-blue-300 hover:shadow-xl focus:outline-none focus:ring-4 focus:ring-blue-100"
+            >
+              <span className="flex h-16 w-16 items-center justify-center rounded-2xl bg-blue-50 text-blue-600 transition group-hover:bg-blue-600 group-hover:text-white">
+                <svg className="h-8 w-8" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h6l6 6v10a2 2 0 01-2 2zM13 3v6h6" />
+                </svg>
+              </span>
+              <span className="mt-8 text-2xl font-bold text-slate-900">Formulário padrão</span>
+              <span className="mt-3 flex-1 text-base leading-relaxed text-slate-500">Cadastro geral do paciente, com dados pessoais, histórico e informações clínicas.</span>
+              <span className="mt-6 font-bold text-blue-600">Preencher <span aria-hidden="true">→</span></span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => selectFormType('anthropometry')}
+              className="group flex min-h-72 flex-col rounded-2xl border border-slate-200 bg-white p-8 text-left shadow-sm transition hover:-translate-y-1 hover:border-emerald-300 hover:shadow-xl focus:outline-none focus:ring-4 focus:ring-emerald-100"
+            >
+              <span className="flex h-16 w-16 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-600 transition group-hover:bg-emerald-600 group-hover:text-white">
+                <svg className="h-8 w-8" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M7 3v18m0-3h10M7 7h3M7 11h2M7 15h3" />
+                </svg>
+              </span>
+              <span className="mt-8 text-2xl font-bold text-slate-900">Antropometria</span>
+              <span className="mt-3 flex-1 text-base leading-relaxed text-slate-500">Medidas corporais, composição corporal, bioimpedância e força muscular.</span>
+              <span className="mt-6 font-bold text-emerald-600">Preencher <span aria-hidden="true">→</span></span>
+            </button>
+          </div>
+        </div>
+      </main>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gray-50 py-8 px-4 sm:py-12 sm:px-6 lg:px-8">
       <div className="max-w-2xl mx-auto">
         {/* Header */}
         <div className="mb-10">
           <div className="mb-6">
+            {!isCreatingNewPatient && !selectedPatient && (
+              <button
+                type="button"
+                onClick={() => setFormType(null)}
+                className="flex items-center space-x-2 text-gray-600 hover:text-gray-900 mb-6 transition-colors group"
+              >
+                <svg className="w-5 h-5 transform group-hover:-translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                </svg>
+                <span className="font-medium">Escolher outro formulário</span>
+              </button>
+            )}
             {isCreatingNewPatient && (
               <button
                 type="button"
@@ -402,12 +470,12 @@ export const FormPage: React.FC = () => {
             <div className="flex items-start justify-between">
               <div className="text-left flex-1">
                 <h1 className="text-4xl font-bold text-gray-900 mb-3">
-                  {isCreatingNewPatient ? 'Novo Paciente' : 'Formulário de Pacientes'}
+                  {isCreatingNewPatient ? 'Novo Paciente' : formType === 'anthropometry' ? 'Antropometria' : 'Formulário de Pacientes'}
                 </h1>
                 <p className="text-gray-500 text-lg">
                   {isCreatingNewPatient
                     ? 'Preencha os dados do novo paciente'
-                    : 'Busque um paciente existente ou crie um novo formulário'
+                    : formType === 'anthropometry' ? 'Selecione o paciente para iniciar a coleta' : 'Busque um paciente existente ou crie um novo formulário'
                   }
                 </p>
               </div>
@@ -451,7 +519,7 @@ export const FormPage: React.FC = () => {
               <SearchInput
                 onSelectPatient={(patient) => {
                   setSelectedPatient(patient);
-                  setFormData({});
+                  setFormData(formType === 'anthropometry' ? { _form_type: ANTHROPOMETRY_FORM_TYPE } : {});
                 }}
                 navigateOnClick={true}
                 placeholder="Buscar paciente"
@@ -510,7 +578,7 @@ export const FormPage: React.FC = () => {
                         type="button"
                         onClick={() => {
                           setSelectedPatient(null);
-                          setFormData({});
+                          setFormData(formType === 'anthropometry' ? { _form_type: ANTHROPOMETRY_FORM_TYPE } : {});
                         }}
                         className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
                         title="Remover seleção"
