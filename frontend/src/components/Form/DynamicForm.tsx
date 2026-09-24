@@ -506,7 +506,9 @@ export const DynamicForm: React.FC<DynamicFormProps> = ({
 
     return (
         <div className="space-y-8">
-            {questionsData.sections.map((section: FormSection) => (
+            {questionsData.sections
+              .filter((section: FormSection) => !section.conditional || localFormData[section.conditional.depends_on] === section.conditional.value)
+              .map((section: FormSection) => (
                 <div key={section.id} className="space-y-6">
                     <div>
                         <h3 className="text-xl font-semibold text-gray-800 border-b border-gray-200 pb-2">
@@ -522,7 +524,7 @@ export const DynamicForm: React.FC<DynamicFormProps> = ({
                         {section.questions.map((question) => renderQuestion(question))}
                     </div>
                 </div>
-            ))}
+              ))}
         </div>
     );
 };

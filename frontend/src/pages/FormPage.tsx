@@ -352,14 +352,9 @@ export const FormPage: React.FC = () => {
 
     try {
       if (formType === 'anthropometry') {
-        const participantId = String(formData.participant_id ?? '');
         const fullName = String(formData.patient_name ?? '').trim();
         const age = Number(formData.age);
 
-        if (!/^(?:00[1-9]|0[1-9][0-9]|100)$/.test(participantId)) {
-          showToast('O ID deve estar entre 001 e 100.', 'warning');
-          return;
-        }
         if (!fullName) {
           showToast('O nome completo é obrigatório.', 'warning');
           return;
@@ -370,7 +365,6 @@ export const FormPage: React.FC = () => {
         }
 
         createAnthropometryMutation.mutate({
-          participant_id: participantId,
           full_name: fullName,
           age,
           form_data: formData,

@@ -11,7 +11,6 @@ export const anthropometryQuestions: FormQuestionsData = {
     {
       id: 'collection', title: 'Identificação da coleta', questions: [
         { id: 'patient_name', label: 'Nome completo', type: 'text', required: true },
-        { id: 'participant_id', label: 'ID do participante (001 a 100)', type: 'text', required: true, max_length: 3, pattern: '(?:00[1-9]|0[1-9][0-9]|100)', input_mode: 'numeric' },
       ],
     },
     {
@@ -81,14 +80,17 @@ export const anthropometryQuestions: FormQuestionsData = {
       ],
     },
     {
-      id: 'hormone_therapy', title: '8. Hormonioterapia — somente homens trans', questions: [
-        { id: 'testosterone_months', label: 'Tempo total de uso de testosterona (meses)', type: 'number', min: 0, conditional: { depends_on: 'participant_group', value: 'Homem trans' } },
-        { id: 'testosterone_type', label: 'Preparação/tipo', type: 'text', conditional: { depends_on: 'participant_group', value: 'Homem trans' } },
-        { id: 'testosterone_route', label: 'Via', type: 'radio', options: ['Intramuscular', 'Subcutânea', 'Transdérmica'], allow_other: true, conditional: { depends_on: 'participant_group', value: 'Homem trans' } },
-        { id: 'testosterone_dose', label: 'Dose', type: 'number', min: 0, conditional: { depends_on: 'participant_group', value: 'Homem trans' } },
-        { id: 'testosterone_interval', label: 'Intervalo entre administrações (dias/semanas)', type: 'text', conditional: { depends_on: 'participant_group', value: 'Homem trans' } },
-        { id: 'last_testosterone_dose', label: 'Data aproximada da última dose', type: 'date', conditional: { depends_on: 'participant_group', value: 'Homem trans' } },
-        { id: 'hormone_therapy_notes', label: 'Observações', type: 'textarea', conditional: { depends_on: 'participant_group', value: 'Homem trans' } },
+      id: 'hormone_therapy',
+      title: '8. Hormonioterapia — somente homens trans',
+      conditional: { depends_on: 'participant_group', value: 'Homem trans' },
+      questions: [
+        { id: 'testosterone_months', label: 'Tempo total de uso de testosterona (meses)', type: 'number', min: 0 },
+        { id: 'testosterone_type', label: 'Preparação/tipo', type: 'text' },
+        { id: 'testosterone_route', label: 'Via', type: 'radio', options: ['Intramuscular', 'Subcutânea', 'Transdérmica'], allow_other: true },
+        { id: 'testosterone_dose', label: 'Dose', type: 'number', min: 0 },
+        { id: 'testosterone_interval', label: 'Intervalo entre administrações (dias/semanas)', type: 'text' },
+        { id: 'last_testosterone_dose', label: 'Data aproximada da última dose', type: 'date' },
+        { id: 'hormone_therapy_notes', label: 'Observações', type: 'textarea' },
       ],
     },
     {
@@ -136,9 +138,12 @@ export const anthropometryQuestions: FormQuestionsData = {
     },
     {
       id: 'mediana_additional', title: '12. Dados adicionais fornecidos pelo Mediana', questions: [
-        ...[
-          ['ideal_weight', 'Peso ideal/desejável (kg)'], ['ideal_muscle_mass', 'Massa muscular ideal (kg)'], ['ideal_fat_mass', 'Massa gorda ideal (kg)'],
-        ].map(([id, label]) => ({ id, label, type: 'number' as const })),
+        { id: 'ideal_weight', label: 'Peso ideal/desejável (kg)', type: 'number' },
+        { id: 'ideal_weight_classification', label: 'Classificação do peso ideal/desejável', type: 'select', options: ['Abaixo', 'Padrão', 'Acima'] },
+        { id: 'ideal_muscle_mass', label: 'Massa muscular ideal (kg)', type: 'number' },
+        { id: 'ideal_muscle_mass_classification', label: 'Classificação da massa muscular ideal', type: 'select', options: ['Abaixo', 'Padrão', 'Acima'] },
+        { id: 'ideal_fat_mass', label: 'Massa gorda ideal (kg)', type: 'number' },
+        { id: 'ideal_fat_mass_classification', label: 'Classificação da massa gorda ideal', type: 'select', options: ['Abaixo', 'Padrão', 'Acima'] },
       ],
     },
     {

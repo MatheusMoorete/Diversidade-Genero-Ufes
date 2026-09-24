@@ -117,7 +117,6 @@ export interface FormResponseCreate {
 }
 
 export interface AnthropometryRecordCreate {
-  participant_id: string;
   full_name: string;
   age: number;
   form_data: Record<string, unknown>;
@@ -125,6 +124,7 @@ export interface AnthropometryRecordCreate {
 
 export interface AnthropometryRecord extends AnthropometryRecordCreate {
   id: number;
+  participant_id: string;
   created_by_user_id: number;
   created_at: string;
 }

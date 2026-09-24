@@ -32,6 +32,10 @@ export interface FormSection {
   id: string;
   title: string;
   description?: string;
+  conditional?: {
+    depends_on: string;
+    value: string | boolean;
+  };
   questions: FormQuestion[];
 }
 

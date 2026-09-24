@@ -182,7 +182,6 @@ class FormResponseResponse(FormResponseBase):
 
 
 class AnthropometryRecordCreate(BaseModel):
-    participant_id: str = Field(..., pattern=r"^(?:00[1-9]|0[1-9][0-9]|100)$")
     full_name: str = Field(..., min_length=1, max_length=255)
     age: int = Field(..., ge=18, le=60)
     form_data: Dict[str, Any]
@@ -190,6 +189,7 @@ class AnthropometryRecordCreate(BaseModel):
 
 class AnthropometryRecordResponse(AnthropometryRecordCreate):
     id: int
+    participant_id: str
     created_by_user_id: int
     created_at: datetime
 

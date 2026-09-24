@@ -6,16 +6,15 @@ from app.schemas import AnthropometryRecordCreate
 
 
 class AnthropometryRecordValidationTest(unittest.TestCase):
-    def test_participant_and_age_limits(self):
+    def test_age_limits(self):
         valid = AnthropometryRecordCreate(
-            participant_id="001", full_name="Participante", age=18, form_data={}
+            full_name="Participante", age=18, form_data={}
         )
-        self.assertEqual(valid.participant_id, "001")
+        self.assertEqual(valid.age, 18)
 
-        for participant_id, age in [("000", 18), ("101", 18), ("001", 17), ("001", 61)]:
-            with self.subTest(participant_id=participant_id, age=age), self.assertRaises(ValidationError):
+        for age in (17, 61):
+            with self.subTest(age=age), self.assertRaises(ValidationError):
                 AnthropometryRecordCreate(
-                    participant_id=participant_id,
                     full_name="Participante",
                     age=age,
                     form_data={},
